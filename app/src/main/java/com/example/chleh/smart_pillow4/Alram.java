@@ -23,15 +23,22 @@ import android.widget.Toast;
 import android.widget.ToggleButton;
 
 import java.io.BufferedReader;
+import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.StringTokenizer;
 
 public class Alram extends AppCompatActivity {
+
+
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -41,6 +48,7 @@ public class Alram extends AppCompatActivity {
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
 
+         final boolean pattern[]=new boolean[7];
         final DatePicker A_date=(DatePicker)findViewById(R.id.datePicker);
         final TimePicker A_time=(TimePicker)findViewById(R.id.timePicker);
         final ArrayList<String> alram_item =new ArrayList<String>();
@@ -53,52 +61,63 @@ public class Alram extends AppCompatActivity {
         final ToggleButton sat=(ToggleButton)findViewById(R.id.Btn_sat);
         final ToggleButton sun=(ToggleButton)findViewById(R.id.Btn_sun);
         final ArrayList<Alram_Infor> alram_infor_list= new ArrayList<Alram_Infor>();
-        final boolean pattern[]=new boolean[7];
         final AlarmManager am = (AlarmManager)getSystemService(Context.ALARM_SERVICE);
         final Calendar m=Calendar.getInstance();
+        String dirPath = getFilesDir().getAbsolutePath();
+        final String dirfile=String.format(dirPath+"/Alram3.txt");
+        final File savefile = new File(dirPath+"/Alram3.txt");
+
+
+        /*
+        반복되는 요일정보 setting
+        디폴트 false;
+         */
+        SetDay(pattern);
 
 
         /*
         알람 정보를 파일에 쓰고 그것을 읽
         * */
-        String dirPath = getFilesDir().getAbsolutePath();
-        File file = new File(dirPath);
+        // txt 파일 생성
+      /*  final File file = new File(dirPath);
         if( !file.exists() ) {
             file.mkdirs();
             Toast.makeText(this, "Success", Toast.LENGTH_SHORT).show();
         }
-
-        // txt 파일 생성
-        String testStr = "ABCDEFGHIJK...";
-        File savefile = new File(dirPath+"/Alram.txt");
-        try{
-               FileOutputStream fos = new FileOutputStream(savefile);
-               fos.write(testStr.getBytes());
-             fos.close();
-               Toast.makeText(this, "Save Success"+ dirPath, Toast.LENGTH_SHORT).show();
+        else
+        {
+            Toast.makeText(this, "wow", Toast.LENGTH_SHORT).show();
+        }
+        if(!savefile.exists())
+        {
+            try{
+                FileOutputStream fos = new FileOutputStream(savefile);
+                // fos.write(testStr.getBytes());
+                fos.close();
             } catch(IOException e){}
+            Toast.makeText(this, "Success", Toast.LENGTH_SHORT).show();
+        }
+        { Toast.makeText(this, "있네 파일", Toast.LENGTH_SHORT).show();
 
-     /*   // 파일이 1개 이상이면 파일 이름 출력
-        if ( file.listFiles().length > 0 )
-               for ( File f : file.listFiles() ) {
-                   String str = f.getName();
-                  Log.v(null,"fileName : "+str);
-                  // 파일 내용 읽어오기
-                 String loadPath = dirPath+"/"+str;
-                 try {
-                          FileInputStream fis = new FileInputStream(loadPath);
-                          BufferedReader bufferReader = new BufferedReader(new InputStreamReader(fis));
-                           String content="", temp="";
-                        while( (temp = bufferReader.readLine()) != null ) {
-                                   content += temp;
-                               }
-                        Log.v(null,""+content);
-            } catch (Exception e) {}
-              }*/
+        }*/
 
+        //파일 읽기
+        readAlramInfor(savefile,alram_infor_list,alram_item);
+        adapter.notifyDataSetChanged();
+        //파일 쓰기
+     /*
+     BufferedWriter file_write;
+       try {
+           file_write = new BufferedWriter(new FileWriter(savefile, true));
+           file_write.newLine();//한줄씩 쓰게 하기
+           file_write.close();
+       }
+       catch (Exception e)
+       {
 
+       }
 
-
+*/
 
 
 
@@ -251,13 +270,108 @@ public class Alram extends AppCompatActivity {
                     alram_item.add(String.format("%d년 %d월 %d일 %d시 %d분",A_date.getYear(),(A_date.getMonth()+1),A_date.getDayOfMonth(),A_time.getHour(),A_time.getMinute()));
                     adapter.notifyDataSetChanged();
                     alram_infor_list.add(new Alram_Infor(A_date.getYear(),(A_date.getMonth()+1),A_date.getFirstDayOfWeek(),A_date.getDayOfMonth(),A_time.getHour(),A_time.getMinute(),pattern));
+
+                    BufferedWriter file_write;
+                    FileOutputStream fos;
+                    try {
+                        fos = openFileOutput("myFile.txt", Context.MODE_APPEND);
+                        PrintWriter out= new PrintWriter(fos);
+
+                  /*      FileWriter fileWriter = new FileWriter(savefile , true);
+                        file_write = new BufferedWriter(fileWriter);
+                        file_write.newLine();//한줄씩 쓰게 하기*/
+                       //년
+                        out.print(A_date.getYear());
+                        out.print(",");
+
+                       //월
+                        out.print((A_date.getMonth()+1));
+                        out.print(",");
+                        //주의 첫번째 일
+                        out.print(A_date.getFirstDayOfWeek());
+                        out.print(",");
+                        //일
+                        out.print((A_date.getDayOfMonth()));
+                        out.print(",");
+                        //시
+                        out.print(A_time.getHour());
+                        out.print(",");
+                        //분
+                        out.print(A_time.getMinute());
+                        out.print(",");
+                        //
+                        if(pattern[0]==false)
+                            out.print(0);
+                        else
+                            out.print(1);
+                        out.print(",");
+                        if(pattern[1]==false)
+                            out.print(0);
+                        else
+                            out.print(1);
+                        out.print(",");
+                        if(pattern[2]==false)
+                            out.print(0);
+                        else
+                            out.print(1);
+                        out.print(",");
+                        if(pattern[3]==false)
+                            out.print(0);
+                        else
+                            out.print(1);
+                        out.print(",");
+                        if(pattern[4]==false)
+                            out.print(0);
+                        else
+                            out.print(1);
+                        out.print(",");
+                        if(pattern[4]==false)
+                            out.print(0);
+                        else
+                            out.print(1);
+                        out.write(",");
+                        if(pattern[5]==false)
+                            out.print(0);
+                        else
+                            out.print(1);
+                        out.print(",");
+                        if(pattern[6]==false)
+                            out.print(0);
+                        else
+                            out.print(1);
+                        out.print(",");
+
+                        out.close();
+                       // fileWriter.close();
+                    }
+                    catch (Exception e)
+                    {
+
+                    }
+              //      readAlramInfor(savefile,alram_infor_list,alram_item);
+
+
+
+
+
+
                     m.set(Calendar.HOUR_OF_DAY,A_time.getHour());
                     m.set(Calendar.MINUTE,A_time.getMinute());
                     m.set(Calendar.SECOND,0);//현재 저장한 시간을 객체에 저장
 
-                    Intent intent = new Intent(Alram.this,AlramService.class);
-                    PendingIntent mAlramSender = PendingIntent.getService(Alram.this,0,intent,0);
-                    am.set(am.RTC_WAKEUP,m.getTimeInMillis(),mAlramSender);
+
+                    /*
+                   파일에 한줄 씩 제대로 쓰기
+
+
+
+                     */
+
+
+
+                  //  Intent intent = new Intent(Alram.this,AlramService.class);
+                  //  PendingIntent mAlramSender = PendingIntent.getService(Alram.this,0,intent,0);
+                  //  am.setExactAndAllowWhileIdle(am.RTC_WAKEUP,m.getTimeInMillis(),mAlramSender);
 
                 }
 
@@ -288,6 +402,87 @@ public class Alram extends AppCompatActivity {
                         alram_list.clearChoices();
                         adapter.notifyDataSetChanged();;
                         alram_infor_list.remove(checked);
+
+                        FileOutputStream fos;
+                    try {
+                        fos = openFileOutput("myFile.txt",MODE_PRIVATE);
+                        PrintWriter out= new PrintWriter(fos);
+
+                        out.print(alram_infor_list.);
+                        out.print(",");
+
+                        //월
+                        out.print((A_date.getMonth()+1));
+                        out.print(",");
+                        //주의 첫번째 일
+                        out.print(A_date.getFirstDayOfWeek());
+                        out.print(",");
+                        //일
+                        out.print((A_date.getDayOfMonth()));
+                        out.print(",");
+                        //시
+                        out.print(A_time.getHour());
+                        out.print(",");
+                        //분
+                        out.print(A_time.getMinute());
+                        out.print(",");
+                        //
+                        if(pattern[0]==false)
+                            out.print(0);
+                        else
+                            out.print(1);
+                        out.print(",");
+                        if(pattern[1]==false)
+                            out.print(0);
+                        else
+                            out.print(1);
+                        out.print(",");
+                        if(pattern[2]==false)
+                            out.print(0);
+                        else
+                            out.print(1);
+                        out.print(",");
+                        if(pattern[3]==false)
+                            out.print(0);
+                        else
+                            out.print(1);
+                        out.print(",");
+                        if(pattern[4]==false)
+                            out.print(0);
+                        else
+                            out.print(1);
+                        out.print(",");
+                        if(pattern[4]==false)
+                            out.print(0);
+                        else
+                            out.print(1);
+                        out.write(",");
+                        if(pattern[5]==false)
+                            out.print(0);
+                        else
+                            out.print(1);
+                        out.print(",");
+                        if(pattern[6]==false)
+                            out.print(0);
+                        else
+                            out.print(1);
+                        out.print(",");
+
+                        out.close();
+                        // fileWriter.close();
+                    }
+                    catch (Exception e)
+                    {
+
+                    }
+
+
+
+
+
+
+
+
                     }
                 }
 
@@ -299,5 +494,91 @@ public class Alram extends AppCompatActivity {
 
 
     }
+    //onCreate 끝
+    /*
+    요일을 판별해주는 것을 함수로써 만들기
+     */
+   void SetDay(boolean[] pattern2)
+   {
+       for(int i=0;i<7;i++)
+       {
+           pattern2[i]=false;
+       }
+   }
+
+    void readAlramInfor(File temp_file,ArrayList<Alram_Infor> temp_alram_infor_list,ArrayList<String> temp_alram_item )
+    {
+        FileInputStream fis;
+        BufferedReader bufferReader;
+                // 파일 내용 읽어오기
+                try {
+                     fis = openFileInput("myFile.txt");
+
+                    bufferReader = new BufferedReader(new InputStreamReader(fis));
+                    String content="", temp="";
+                    while( (temp = bufferReader.readLine()) != null ) {
+                    //    content += temp;
+                        /*
+                        ,단위로 string 끊어치기기
+                         */
+                        StringTokenizer tokens= new StringTokenizer(temp);
+
+                        /**
+                         *생각해보는 반복요일 숫자인데 그거 지정해야하네....
+                         */
+                        int temp_year=0;
+                        int temp_month=0;
+                        int temp_firstDay=0;
+                        int temp_day=0;
+                        int temp_hour=0;
+                        int temp_min=0;
+                        boolean[] temp_pa= new boolean[7];
+                        if(temp=="")
+                            break;
+                        temp_year=Integer.parseInt(tokens.nextToken(","));
+                        temp_month=Integer.parseInt(tokens.nextToken(","));
+                        temp_firstDay=Integer.parseInt(tokens.nextToken(","));
+                        temp_day=Integer.parseInt(tokens.nextToken(","));
+                        temp_hour=Integer.parseInt(tokens.nextToken(","));
+                        temp_min=Integer.parseInt(tokens.nextToken(","));
+                        for(int i=0;i<6;i++)
+                        {
+                            temp_pa[i]=decide(Integer.parseInt(tokens.nextToken(",")));
+                        }
+                        temp_alram_item.add(String.format("%d년 %d월 %d일 %d시 %d분",temp_year,temp_month,temp_day,temp_hour,temp_min));
+                        temp_alram_infor_list.add(new Alram_Infor(temp_year,temp_month,temp_firstDay,temp_day,temp_hour,temp_min,temp_pa));
+                        // 추가
+                    }
+                    fis.close();
+                    bufferReader.close();
+                    Log.v(null,""+content);
+                } catch (Exception e) {}
+
+
+
+
+    }
+    /*반복 요일 설정용
+
+     */
+    boolean decide(int what)
+    {
+        if(what==0)
+        {
+            return false;
+        }
+        else
+        {
+            return true;
+        }
+    }
+
+/*
+파일 쓰기
+ */
+
+
+
+
 
 }

@@ -17,6 +17,7 @@ public class Alram_Infor {
     private int min;//
     private int week_first_day;//그주의 첫번째 일을 구해서 그 차이를 이용하여 월화수목금 계산
     private int week_order_day;//월화수목금
+    private  boolean [] dayofset;
     private boolean pattern[] =new boolean [7];
     private String clock;
 
