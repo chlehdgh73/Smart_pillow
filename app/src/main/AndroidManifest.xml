@@ -51,6 +51,10 @@
             android:label="@string/title_activity_music"
             android:theme="@style/AppTheme.NoActionBar" />
 
+        <service
+            android:name=".MusicService"
+            android:enabled="true"
+            android:exported="true"></service>
     </application>
 
 </manifest>

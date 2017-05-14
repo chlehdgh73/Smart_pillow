@@ -36,6 +36,7 @@ public class Music extends AppCompatActivity {
                 Intent intent = new Intent(Music.this,MusicPlayer.class);
                 intent.putExtra("position",position);
                 intent.putExtra("playlist",list);
+
                 startActivity(intent);
             }
         });

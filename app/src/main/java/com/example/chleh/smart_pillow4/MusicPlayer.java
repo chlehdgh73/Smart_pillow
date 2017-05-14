@@ -31,6 +31,11 @@ public class MusicPlayer extends AppCompatActivity implements View.OnClickListen
     private ProgressUpdate progressUpdate;
     private int position;
 
+
+
+
+
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -55,8 +60,10 @@ public class MusicPlayer extends AppCompatActivity implements View.OnClickListen
         pause.setOnClickListener(this);
         next.setOnClickListener(this);
 
-        playMusic(list.get(position));
 
+
+
+        playMusic(list.get(position));
 
 
 
@@ -99,19 +106,23 @@ public class MusicPlayer extends AppCompatActivity implements View.OnClickListen
 
         try {
             seekBar.setProgress(0);
-            title.setText(musicDto.getArtist()+" - "+musicDto.getTitle());
+            title.setText(musicDto.getArtist() + " - " + musicDto.getTitle());
             Uri musicURI = Uri.withAppendedPath(
-                    MediaStore.Audio.Media.EXTERNAL_CONTENT_URI, ""+musicDto.getId());
-            mediaPlayer.reset();
-            mediaPlayer.setDataSource(this, musicURI);
-            mediaPlayer.prepare();
+                    MediaStore.Audio.Media.EXTERNAL_CONTENT_URI, "" + musicDto.getId());
+
+            Intent intent2 = new Intent(this, MusicService.class);
+            intent2.putExtra("id",musicDto.getId());
+
+            startService(intent2);
 
 
 
+            //mediaPlayer.reset();
+                //mediaPlayer.setDataSource(this, musicURI);
+                //mediaPlayer.prepare();
 
 
-            mediaPlayer.start();
-
+                // mediaPlayer.start();
 
 
 
