@@ -32,31 +32,31 @@ public class MusicService extends Service {
     }
 
     @Override
-    public boolean onUnbind(Intent intent){
+        public boolean onUnbind(Intent intent){
         Log.i("정보 : ","onUnbind 호출");
-        mediaPlayer.pause();
+       // mediaPlayer.pause();
         return true;
     }
     @Override
-    public IBinder onBind(final Intent intent) {
-        // TODO: Return the communication channel to the service.
-        try {
-           if(intent.getIntExtra("restart",0)==0) {
-               Uri musicURI = Uri.withAppendedPath(MediaStore.Audio.Media.EXTERNAL_CONTENT_URI, "" + intent.getStringExtra("id"));
-               mediaPlayer.reset();
-               mediaPlayer.setDataSource(this, musicURI);
-               mediaPlayer.prepare();
-               mediaPlayer.start();
-           }
-           else//다시시작
+               public IBinder onBind(final Intent intent) {
+                // TODO: Return the communication channel to the service.
+                try {
+                    if(intent.getIntExtra("restart",0)==0) {
+                        Uri musicURI = Uri.withAppendedPath(MediaStore.Audio.Media.EXTERNAL_CONTENT_URI, "" + intent.getStringExtra("id"));
+                        mediaPlayer.reset();
+                        mediaPlayer.setDataSource(this, musicURI);
+                        mediaPlayer.prepare();
+                        mediaPlayer.start();
+                    }
+                    else//다시시작
            {
-               Uri musicURI = Uri.withAppendedPath(MediaStore.Audio.Media.EXTERNAL_CONTENT_URI, "" + intent.getStringExtra("id"));
-               mediaPlayer.reset();
-               mediaPlayer.setDataSource(this, musicURI);
-               mediaPlayer.prepare();
-               mediaPlayer.seekTo(intent.getIntExtra("restart",0));
-               mediaPlayer.start();
-           }
+                    Uri musicURI = Uri.withAppendedPath(MediaStore.Audio.Media.EXTERNAL_CONTENT_URI, "" + intent.getStringExtra("id"));
+                    mediaPlayer.reset();
+                    mediaPlayer.setDataSource(this, musicURI);
+                    mediaPlayer.prepare();
+                    mediaPlayer.seekTo(intent.getIntExtra("restart",0));
+                    mediaPlayer.start();
+                }
             mediaPlayer.setOnCompletionListener(new MediaPlayer.OnCompletionListener() {
                 @Override
                 public void onCompletion(MediaPlayer mp) {
@@ -84,10 +84,10 @@ public class MusicService extends Service {
     }
     public void onCreate() {
         super.onCreate();
-        mediaPlayer = new MediaPlayer();
-        oncreate=0;
-        // 서비스에서 가장 먼저 호출됨(최초에 한번만)
-    }
+    mediaPlayer = new MediaPlayer();
+    oncreate=0;
+    // 서비스에서 가장 먼저 호출됨(최초에 한번만)
+}
     public int getoncreate()
     {
         return oncreate;
@@ -114,29 +114,11 @@ public class MusicService extends Service {
                 }
         return START_STICKY;
     }
-public MediaPlayer player()
+
+    public MediaPlayer player()
 {
     return mediaPlayer;
 }
-    class ProgressUpdate extends Thread {
-        @Override
-        public void run() {
-            while(oncreate==0||mediaPlayer.isPlaying()){
-                try {
-                    Thread.sleep(500);
-                    if(mediaPlayer!=null){
-                        time=mediaPlayer.getCurrentPosition();
-                          }
-                } catch (Exception e) {
-                    Log.e("ProgressUpdate",e.getMessage());
-                }
-
-            }
-        }
-    }
-
-
-
 
 
     @Override

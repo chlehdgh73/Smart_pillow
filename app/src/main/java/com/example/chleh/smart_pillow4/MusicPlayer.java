@@ -19,6 +19,7 @@ import android.view.View;
 import android.widget.ImageView;
 import android.widget.SeekBar;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import java.util.ArrayList;
 
@@ -36,6 +37,7 @@ public class MusicPlayer extends AppCompatActivity implements View.OnClickListen
     private play play2;
     private int oncreate=0;
     private  int time;
+    private  boolean end;
     //
      MusicService ms; // 서비스 객체
     boolean isService = false; // 서비스 중인 확인용
@@ -59,6 +61,7 @@ public class MusicPlayer extends AppCompatActivity implements View.OnClickListen
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        end=false;
         setContentView(R.layout.activity_musicplayer);
         Intent intent = getIntent();
         mediaPlayer = new MediaPlayer();
@@ -86,8 +89,7 @@ public class MusicPlayer extends AppCompatActivity implements View.OnClickListen
 
         playMusic(list.get(position));
 
-        progressUpdate = new ProgressUpdate();
-        progressUpdate.start();
+
 
         seekBar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
             @Override
@@ -102,12 +104,16 @@ public class MusicPlayer extends AppCompatActivity implements View.OnClickListen
 
             @Override
             public void onStopTrackingTouch(SeekBar seekBar) {
-                ms.mediaPlayer.seekTo(seekBar.getProgress());
-                if(seekBar.getProgress()>0 && play.getVisibility()== View.GONE){
+                //ms.player().seekTo(seekBar.getProgress());
+                if(seekBar.getProgress()>=0 && play.getVisibility()== View.GONE){
                    // ms.mediaPlayer.start();
-                    Intent intent2 = new Intent(MusicPlayer.this, MusicService.class);
-                    intent2.putExtra("restart",0);
+                    ms.player().pause();
+                    unbindService(conn); // 서비스 종료
 
+                    Intent intent2 = new Intent(MusicPlayer.this, MusicService.class);
+                    intent2.putExtra("id",list.get(position).getId());
+                    time=seekBar.getProgress();
+                    intent2.putExtra("restart",time);
                     bindService(intent2, // intent 객체
                             conn, // 서비스와 연결에 대한 정의
                             Context.BIND_AUTO_CREATE);
@@ -115,18 +121,10 @@ public class MusicPlayer extends AppCompatActivity implements View.OnClickListen
                 }
             }
         });
-      //  UiControl(list.get(position));
-      //  ms.player().setOnCompletionListener(new MediaPlayer.OnCompletionListener() {
- /*      mediaPlayer.setOnCompletionListener(new MediaPlayer.OnCompletionListener() {
-            @Override
-            public void onCompletion(MediaPlayer mp) {
-                if(position+1<list.size()) {
-                    position++;
-                    playMusic(list.get(position));
-                }
-            }
-        });*/
+
     }
+
+
 
     public void playMusic(MusicDto musicDto) {
 
@@ -135,38 +133,11 @@ public class MusicPlayer extends AppCompatActivity implements View.OnClickListen
             title.setText(musicDto.getArtist() + " - " + musicDto.getTitle());
             Uri musicURI = Uri.withAppendedPath(
                     MediaStore.Audio.Media.EXTERNAL_CONTENT_URI, "" + musicDto.getId());
-           /* Intent intent2 = new Intent(this, MusicService.class);
-            intent2.putExtra("id",musicDto.getId());
-            bindService(intent2, // intent 객체
-                    conn, // 서비스와 연결에 대한 정의
-                    Context.BIND_AUTO_CREATE);*/
 
               play2 = new play();
               play2.start();
               play2.join();
-
-             // mediaPlayer = ms.mediaPlayer;
-            //startService(intent2);
-            //mediaPlayer.reset();
-            //mediaPlayer.setDataSource(this, musicURI);
-            //mediaPlayer.prepare();
-        /*
-                // mediaPlayer.start();
-
-
-
-            seekBar.setMax(ms.mediaPlayer.getDuration());
-            if(ms.mediaPlayer.isPlaying()){
-                play.setVisibility(View.GONE);
-                pause.setVisibility(View.VISIBLE);
-            }else{
-                play.setVisibility(View.VISIBLE);
-                pause.setVisibility(View.GONE);
-            }
-*/
-
-         //   Bitmap bitmap = BitmapFactory.decodeFile(getCoverArtPath(Long.parseLong(musicDto.getAlbumId()),getApplication()));
-        //    album.setImageBitmap(bitmap);
+            oncreate=0;
 
         }
         catch (Exception e) {
@@ -189,6 +160,8 @@ public class MusicPlayer extends AppCompatActivity implements View.OnClickListen
 
         Bitmap bitmap = BitmapFactory.decodeFile(getCoverArtPath(Long.parseLong(musicDto.getAlbumId()),getApplication()));
         album.setImageBitmap(bitmap);
+        progressUpdate = new ProgressUpdate();
+        progressUpdate.start();
 
     }
 
@@ -230,6 +203,7 @@ public class MusicPlayer extends AppCompatActivity implements View.OnClickListen
             case R.id.pause:
                 pause.setVisibility(View.GONE);
                 play.setVisibility(View.VISIBLE);
+                ms.player().pause();
                 unbindService(conn); // 서비스 종료
 
 
@@ -238,37 +212,42 @@ public class MusicPlayer extends AppCompatActivity implements View.OnClickListen
             case R.id.pre:
                 if(position-1>=0 ){
                     position--;
-                   // playMusic(list.get(position));
+                    ms.player().pause();
                     unbindService(conn); // 서비스 종료
 
-                    Intent intent3 = new Intent(MusicPlayer.this, MusicService.class);
-                    intent3.putExtra("id",list.get(position).getId());
-                    intent3.putExtra("restart",time);
-                    bindService(intent3, // intent 객체
+                  //  end=true;//작업을 종료시켜야해!
+                     playMusic(list.get(position));
+                   /*  intent2 = new Intent(MusicPlayer.this, MusicService.class);
+                    intent2.putExtra("id",list.get(position).getId());
+                    intent2.putExtra("restart",0);
+                    bindService(intent2, // intent 객체
                             conn, // 서비스와 연결에 대한 정의
                             Context.BIND_AUTO_CREATE);
                     UiControl(list.get(position));
                     seekBar.setProgress(0);
-                    oncreate=0;
-                    progressUpdate.start();
+
+                    progressUpdate.start();*/
                 }
                 break;
             case R.id.next:
                 if(position+1<list.size()){
                     position++;
+                    ms.player().pause();
                     unbindService(conn); // 서비스 종료
 
-                    Intent intent3 = new Intent(MusicPlayer.this, MusicService.class);
-                    intent3.putExtra("id",list.get(position).getId());
-                    intent3.putExtra("restart",time);
-                    bindService(intent3, // intent 객체
+                    //  end=true;//작업을 종료시켜야해!
+                    playMusic(list.get(position));
+                   /*  intent2 = new Intent(MusicPlayer.this, MusicService.class);
+                    intent2.putExtra("id",list.get(position).getId());
+                    intent2.putExtra("restart",0);
+                    bindService(intent2, // intent 객체
                             conn, // 서비스와 연결에 대한 정의
                             Context.BIND_AUTO_CREATE);
-                   // playMusic(list.get(position));
                     UiControl(list.get(position));
                     seekBar.setProgress(0);
-                    oncreate=0;
-                    progressUpdate.start();
+
+                    progressUpdate.start();*/
+
                 }
 
                 break;
@@ -279,7 +258,7 @@ public class MusicPlayer extends AppCompatActivity implements View.OnClickListen
     class ProgressUpdate extends Thread {
         @Override
         public void run() {
-            while(oncreate==0||ms.player().isPlaying()){
+            while(oncreate==0||ms.player().isPlaying()&&end==false){
                 try {
                     Thread.sleep(500);
                     if(ms.mediaPlayer!=null){
@@ -294,6 +273,7 @@ public class MusicPlayer extends AppCompatActivity implements View.OnClickListen
 
             }
         }
+
     }
     class play extends Thread{
         public void run() {
@@ -303,7 +283,6 @@ public class MusicPlayer extends AppCompatActivity implements View.OnClickListen
             intent2.putExtra("position",position);
             intent2.putExtra("id+1",list.get(position+1).getId());
             intent2.putExtra("restart",0);
-
             bindService(intent2, // intent 객체
                    conn, // 서비스와 연결에 대한 정의
                     Context.BIND_AUTO_CREATE);
@@ -319,10 +298,6 @@ public class MusicPlayer extends AppCompatActivity implements View.OnClickListen
     @Override
     protected void onDestroy() {
         super.onDestroy();
-        isPlaying = false;
-        if(ms.mediaPlayer!=null){
-            ms.mediaPlayer.release();
-            ms.mediaPlayer = null;
-        }
+
     }
 }
