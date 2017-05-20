@@ -76,51 +76,11 @@ public class Alram extends AppCompatActivity {
         디폴트 false;
          */
         SetDay(pattern);
-
-
-        /*
-        알람 정보를 파일에 쓰고 그것을 읽
-        * */
-        // txt 파일 생성
-      /*  final File file = new File(dirPath);
-        if( !file.exists() ) {
-            file.mkdirs();
-            Toast.makeText(this, "Success", Toast.LENGTH_SHORT).show();
-        }
-        else
-        {
-            Toast.makeText(this, "wow", Toast.LENGTH_SHORT).show();
-        }
-        if(!savefile.exists())
-        {
-            try{
-                FileOutputStream fos = new FileOutputStream(savefile);
-                // fos.write(testStr.getBytes());
-                fos.close();
-            } catch(IOException e){}
-            Toast.makeText(this, "Success", Toast.LENGTH_SHORT).show();
-        }
-        { Toast.makeText(this, "있네 파일", Toast.LENGTH_SHORT).show();
-
-        }*/
-
         //파일 읽기
         readAlramInfor(savefile,alram_infor_list,alram_item);
         adapter.notifyDataSetChanged();
         //파일 쓰기
-     /*
-     BufferedWriter file_write;
-       try {
-           file_write = new BufferedWriter(new FileWriter(savefile, true));
-           file_write.newLine();//한줄씩 쓰게 하기
-           file_write.close();
-       }
-       catch (Exception e)
-       {
 
-       }
-
-*/
 
 
 
@@ -258,9 +218,6 @@ public class Alram extends AppCompatActivity {
             }
         });
 
-
-
-
         //삽입 버튼 만들기
         Button button1 = (Button)findViewById(R.id.Btn_insert);
         button1.setOnClickListener(new View.OnClickListener() {
@@ -359,35 +316,11 @@ public class Alram extends AppCompatActivity {
                     {
 
                     }
-                    //readAlramInfor(savefile,alram_infor_list,alram_item);
-
-
-
-
-
-
-                   /* m.set(Calendar.HOUR_OF_DAY,A_time.getHour());
-                    m.set(Calendar.MINUTE,A_time.getMinute());
-                    m.set(Calendar.SECOND,0);//현재 저장한 시간을 객체에 저장*/
-
-
-                    /*
-                   파일에 한줄 씩 제대로 쓰기
-
-
-
-                     */
-
-
-
-                  //  Intent intent = new Intent(Alram.this,AlramService.class);
-                    //  PendingIntent mAlramSender = PendingIntent.getService(Alram.this,0,intent,0);
-                    //  am.setExactAndAllowWhileIdle(am.RTC_WAKEUP,m.getTimeInMillis(),mAlramSender);
 
                 }
 
 
-
+                SetDay(pattern);
 
             }
         });

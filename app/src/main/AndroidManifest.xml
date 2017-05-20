@@ -54,7 +54,12 @@
         <service
             android:name=".MusicService"
             android:enabled="true"
-            android:exported="true"></service>
+            android:exported="true" />
+
+        <activity
+            android:name=".Alram_Music"
+            android:label="@string/title_activity_alram__music"
+            android:theme="@style/AppTheme.NoActionBar"></activity>
     </application>
 
 </manifest>

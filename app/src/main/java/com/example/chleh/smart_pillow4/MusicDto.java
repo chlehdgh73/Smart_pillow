@@ -12,7 +12,7 @@ public class MusicDto implements Serializable {
     private String artist;
 
     public MusicDto() {
-    }
+}
 
     public MusicDto(String id, String albumId, String title, String artist) {
         this.id = id;

@@ -83,9 +83,8 @@ public class MusicPlayer extends AppCompatActivity implements View.OnClickListen
         pause.setOnClickListener(this);
         next.setOnClickListener(this);
 
-
-
-
+        Intent intent3 = new Intent(MusicPlayer.this,Music.class);
+        stopService(intent3);
 
         playMusic(list.get(position));
 
@@ -196,8 +195,7 @@ public class MusicPlayer extends AppCompatActivity implements View.OnClickListen
                 bindService(intent2, // intent 객체
                         conn, // 서비스와 연결에 대한 정의
                         Context.BIND_AUTO_CREATE);
-                //    mediaPlayer.seekTo(mediaPlayer.getCurrentPosition());
-               //     mediaPlayer.start();
+
 
                 break;
             case R.id.pause:
@@ -205,28 +203,14 @@ public class MusicPlayer extends AppCompatActivity implements View.OnClickListen
                 play.setVisibility(View.VISIBLE);
                 ms.player().pause();
                 unbindService(conn); // 서비스 종료
-
-
-                //mediaPlayer.pause();
                 break;
             case R.id.pre:
                 if(position-1>=0 ){
                     position--;
                     ms.player().pause();
                     unbindService(conn); // 서비스 종료
-
-                  //  end=true;//작업을 종료시켜야해!
                      playMusic(list.get(position));
-                   /*  intent2 = new Intent(MusicPlayer.this, MusicService.class);
-                    intent2.putExtra("id",list.get(position).getId());
-                    intent2.putExtra("restart",0);
-                    bindService(intent2, // intent 객체
-                            conn, // 서비스와 연결에 대한 정의
-                            Context.BIND_AUTO_CREATE);
-                    UiControl(list.get(position));
-                    seekBar.setProgress(0);
 
-                    progressUpdate.start();*/
                 }
                 break;
             case R.id.next:
@@ -283,6 +267,7 @@ public class MusicPlayer extends AppCompatActivity implements View.OnClickListen
             intent2.putExtra("position",position);
             intent2.putExtra("id+1",list.get(position+1).getId());
             intent2.putExtra("restart",0);
+            startService(intent2);
             bindService(intent2, // intent 객체
                    conn, // 서비스와 연결에 대한 정의
                     Context.BIND_AUTO_CREATE);
