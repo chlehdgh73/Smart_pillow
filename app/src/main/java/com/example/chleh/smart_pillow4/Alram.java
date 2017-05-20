@@ -232,11 +232,18 @@ public class Alram extends AppCompatActivity {
                     adapter.notifyDataSetChanged();
                     Calendar cal= Calendar.getInstance();
 
-                   cal.set(Calendar.YEAR,A_date.getYear());
+                     cal.set(Calendar.YEAR,A_date.getYear());
                     cal.set(Calendar.MONTH,A_date.getMonth());
                     cal.set(Calendar.DAY_OF_MONTH,A_date.getDayOfMonth());
+                    cal.set(Calendar.HOUR_OF_DAY,A_time.getHour());
+                    cal.set(Calendar.MINUTE,A_time.getMinute());
+                    cal.set(Calendar.SECOND,0);
                    int dayofweek= cal.get(Calendar.DAY_OF_WEEK);
                     alram_infor_list.add(new Alram_Infor(A_date.getYear(),(A_date.getMonth()+1),A_date.getDayOfMonth(),dayofweek,A_time.getHour(),A_time.getMinute(),pattern));
+                    //
+
+
+
 
                     BufferedWriter file_write;
                     FileOutputStream fos;
@@ -307,20 +314,15 @@ public class Alram extends AppCompatActivity {
                         out.close();
                        // fileWriter.close();
 
-
-
-
-
                     }
                     catch (Exception e)
                     {
 
                     }
-
+                    setAlram(cal);//알람 설정
                 }
-
-
                 SetDay(pattern);
+
 
             }
         });
@@ -474,7 +476,7 @@ public class Alram extends AppCompatActivity {
                         int temp_hour=0;
                         int temp_min=0;
                         boolean[] temp_pa= new boolean[7];
-                        if(temp=="")
+                        if(temp.equals(""))
                            continue;
                         temp_year=Integer.parseInt(tokens.nextToken(","));
                         temp_month=Integer.parseInt(tokens.nextToken(","));
@@ -518,6 +520,13 @@ public class Alram extends AppCompatActivity {
 파일 쓰기
  */
 
+void setAlram(Calendar cal)
+{
+    Intent intent = new Intent(Alram.this,MyReceiver.class);
+    PendingIntent sender = PendingIntent.getBroadcast(Alram.this,0,intent,0);
+    AlarmManager am = (AlarmManager)getSystemService(Context.ALARM_SERVICE);
+    am.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP,cal.getTimeInMillis(),sender);//
+}
 
 
 
