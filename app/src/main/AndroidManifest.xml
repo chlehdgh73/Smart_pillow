@@ -39,10 +39,6 @@
             android:label="@string/title_activity_phone"
             android:theme="@style/AppTheme.NoActionBar" />
         <activity
-            android:name=".Bluetooth"
-            android:label="@string/title_activity_bluetooth"
-            android:theme="@style/AppTheme.NoActionBar" />
-        <activity
             android:name=".DeviceListActivity"
             android:theme="@android:style/Theme.DeviceDefault.Dialog" />
         <activity android:name=".MusicPlayer" />
@@ -66,10 +62,21 @@
             android:enabled="true"
             android:exported="true" />
 
-        <receiver
-            android:name=".MyReceiver"
+        <receiver android:name=".MyReceiver"
             android:enabled="true"
-            android:exported="true"></receiver>
+            android:exported="true"
+        />
+
+
+
+
+
+        <activity android:name=".Bluetooth" />
+
+        <service
+            android:name=".BLEService"
+            android:enabled="true"
+            android:exported="true"></service>
     </application>
 
 </manifest>

@@ -34,62 +34,63 @@ public class Main extends AppCompatActivity {
 
     private static final String TAG = "AppPermission";
     private final int MY_PERMISSION_REQUEST_STORAGE = 100;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-       // Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
-       // setSupportActionBar(toolbar);
+        // Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
+        // setSupportActionBar(toolbar);
         //액티비티 전환
         checkPermission();
         //알람
 
-        Button button =(Button)findViewById(R.id.button6);
-        button.setOnClickListener (new View.OnClickListener() {
+        Button button = (Button) findViewById(R.id.button6);
+        button.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View arg0) {
-                Intent i = new Intent(getApplicationContext(),Alram.class);
+                Intent i = new Intent(getApplicationContext(), Alram.class);
                 startActivity(i);
             }
         });
 
         //블루투스
-        Button button2 =(Button)findViewById(R.id.button9);
-        button2.setOnClickListener (new View.OnClickListener() {
+        Button button2 = (Button) findViewById(R.id.button9);
+        button2.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View arg0) {
 
-                Intent blue = new Intent(getApplicationContext(),Bluetooth.class);
+                Intent blue = new Intent(getApplicationContext(), Bluetooth.class);
                 startActivity(blue);
             }
         });
 
         //음악
-        Button button3 =(Button)findViewById(R.id.button5);
-        button3.setOnClickListener (new View.OnClickListener() {
+        Button button3 = (Button) findViewById(R.id.button5);
+        button3.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View arg0) {
 
 
-                Intent k = new Intent(getApplicationContext(),Music.class);
+                Intent k = new Intent(getApplicationContext(), Music.class);
                 startActivity(k);
             }
         });
 
-        Button button4 =(Button)findViewById(R.id.button7);
-        button4.setOnClickListener (new View.OnClickListener() {
+        Button button4 = (Button) findViewById(R.id.button7);
+        button4.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View arg0) {
-                Intent j = new Intent(getApplicationContext(),SleepPattern.class);
+                Intent j = new Intent(getApplicationContext(), SleepPattern.class);
                 startActivity(j);
             }
         });
 
-        Button button5 =(Button)findViewById(R.id.button4);
-        button5.setOnClickListener (new View.OnClickListener() {
+        Button button5 = (Button) findViewById(R.id.button4);
+        button5.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View arg0) {
-                Intent l = new Intent(getApplicationContext(),phone.class);
+                Intent l = new Intent(getApplicationContext(), phone.class);
                 startActivity(l);
             }
         });
@@ -125,6 +126,7 @@ public class Main extends AppCompatActivity {
 
         return super.onOptionsItemSelected(item);
     }
+
     private void checkPermission() {//권한
         Log.i(TAG, "CheckPermission : " + checkSelfPermission(Manifest.permission.WRITE_EXTERNAL_STORAGE));
         if (checkSelfPermission(Manifest.permission.WRITE_EXTERNAL_STORAGE)
@@ -146,9 +148,10 @@ public class Main extends AppCompatActivity {
 
         } else {
             Log.e(TAG, "permission deny");
-            writeFile();
+
         }
     }
+
     @Override
     public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
         switch (requestCode) {
@@ -156,7 +159,7 @@ public class Main extends AppCompatActivity {
                 if (grantResults[0] == PackageManager.PERMISSION_GRANTED
                         && grantResults[1] == PackageManager.PERMISSION_GRANTED) {
 
-                    writeFile();
+
                     // permission was granted, yay! do the
                     // calendar task you need to do.
 
@@ -170,19 +173,4 @@ public class Main extends AppCompatActivity {
                 break;
         }
     }
-
-    /**
-     * Create file example.
-     */
-    private void writeFile() {
-        File file = new File(Environment.getExternalStorageDirectory().getPath() + File.separator + "temp.txt");
-        try {
-            Log.d(TAG, "create new File : " + file.createNewFile());
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-    }
-
-
-
 }

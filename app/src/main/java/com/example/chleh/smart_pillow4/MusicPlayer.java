@@ -82,10 +82,6 @@ public class MusicPlayer extends AppCompatActivity implements View.OnClickListen
         play.setOnClickListener(this);
         pause.setOnClickListener(this);
         next.setOnClickListener(this);
-
-        Intent intent3 = new Intent(MusicPlayer.this,Music.class);
-        stopService(intent3);
-
         playMusic(list.get(position));
 
 
@@ -105,21 +101,16 @@ public class MusicPlayer extends AppCompatActivity implements View.OnClickListen
             public void onStopTrackingTouch(SeekBar seekBar) {
                 //ms.player().seekTo(seekBar.getProgress());
                 if(seekBar.getProgress()>=0 && play.getVisibility()== View.GONE){
-                   // ms.mediaPlayer.start();
-                    ms.player().pause();
-                    unbindService(conn); // 서비스 종료
 
-                    Intent intent2 = new Intent(MusicPlayer.this, MusicService.class);
-                    intent2.putExtra("id",list.get(position).getId());
                     time=seekBar.getProgress();
-                    intent2.putExtra("restart",time);
-                    bindService(intent2, // intent 객체
-                            conn, // 서비스와 연결에 대한 정의
-                            Context.BIND_AUTO_CREATE);
+                    ms.player().seekTo(time);
+                    ms.player().start();
+
 
                 }
             }
         });
+
 
     }
 
@@ -183,18 +174,30 @@ public class MusicPlayer extends AppCompatActivity implements View.OnClickListen
         return result;
     }
 
+
     @Override
     public void onClick(View v) {
         switch (v.getId()){
             case R.id.play:
                 pause.setVisibility(View.VISIBLE);
                 play.setVisibility(View.GONE);
-                Intent intent2 = new Intent(MusicPlayer.this, MusicService.class);
-                intent2.putExtra("id",list.get(position).getId());
-                intent2.putExtra("restart",time);
-                bindService(intent2, // intent 객체
-                        conn, // 서비스와 연결에 대한 정의
-                        Context.BIND_AUTO_CREATE);
+             try {
+                 Uri musicURI = Uri.withAppendedPath(MediaStore.Audio.Media.EXTERNAL_CONTENT_URI, "" + list.get(position).getId());
+                 ms.player().reset();
+                 ms.player().setDataSource(this, musicURI);
+                 ms.player().prepare();
+                 ms.player().seekTo(time);
+                 ms.player().start();
+             }catch (Exception e)
+             {
+
+             }
+          //      Intent intent2 = new Intent(MusicPlayer.this, MusicService.class);
+          //      intent2.putExtra("id",list.get(position).getId());
+         //       intent2.putExtra("restart",time);
+          //      bindService(intent2, // intent 객체
+         //               conn, // 서비스와 연결에 대한 정의
+        //                Context.BIND_AUTO_CREATE);
 
 
                 break;
@@ -202,14 +205,26 @@ public class MusicPlayer extends AppCompatActivity implements View.OnClickListen
                 pause.setVisibility(View.GONE);
                 play.setVisibility(View.VISIBLE);
                 ms.player().pause();
-                unbindService(conn); // 서비스 종료
+
+    //            unbindService(conn); // 서비스 종료
                 break;
             case R.id.pre:
                 if(position-1>=0 ){
                     position--;
                     ms.player().pause();
-                    unbindService(conn); // 서비스 종료
-                     playMusic(list.get(position));
+                    try {
+                        Uri musicURI = Uri.withAppendedPath(MediaStore.Audio.Media.EXTERNAL_CONTENT_URI, "" + list.get(position).getId());
+                        ms.player().reset();
+                        ms.player().setDataSource(this, musicURI);
+                        ms.player().prepare();
+                        ms.player().seekTo(time);
+                        ms.player().start();
+                    }catch (Exception e)
+                    {
+
+                    }
+                 //   unbindService(conn); // 서비스 종료
+
 
                 }
                 break;
@@ -217,20 +232,21 @@ public class MusicPlayer extends AppCompatActivity implements View.OnClickListen
                 if(position+1<list.size()){
                     position++;
                     ms.player().pause();
-                    unbindService(conn); // 서비스 종료
+                    try {
+                        Uri musicURI = Uri.withAppendedPath(MediaStore.Audio.Media.EXTERNAL_CONTENT_URI, "" + list.get(position).getId());
+                        ms.player().reset();
+                        ms.player().setDataSource(this, musicURI);
+                        ms.player().prepare();
+                        ms.player().seekTo(time);
+                        ms.player().start();
+                    }catch (Exception e)
+                    {
 
+                    }
+                  // unbindService(conn); // 서비스 종료
                     //  end=true;//작업을 종료시켜야해!
-                    playMusic(list.get(position));
-                   /*  intent2 = new Intent(MusicPlayer.this, MusicService.class);
-                    intent2.putExtra("id",list.get(position).getId());
-                    intent2.putExtra("restart",0);
-                    bindService(intent2, // intent 객체
-                            conn, // 서비스와 연결에 대한 정의
-                            Context.BIND_AUTO_CREATE);
-                    UiControl(list.get(position));
-                    seekBar.setProgress(0);
+                 //   playMusic(list.get(position));
 
-                    progressUpdate.start();*/
 
                 }
 
@@ -245,7 +261,7 @@ public class MusicPlayer extends AppCompatActivity implements View.OnClickListen
             while(oncreate==0||ms.player().isPlaying()&&end==false){
                 try {
                     Thread.sleep(500);
-                    if(ms.mediaPlayer!=null){
+                    if(ms.player()!=null){
                         seekBar.setMax(ms.player().getDuration());
                         seekBar.setProgress(ms.getcur());
                         time=ms.getcur();
@@ -265,12 +281,13 @@ public class MusicPlayer extends AppCompatActivity implements View.OnClickListen
             intent2.putExtra("id",list.get(position).getId());
             intent2.putExtra("size",list.size());
             intent2.putExtra("position",position);
-            intent2.putExtra("id+1",list.get(position+1).getId());
+            //intent2.putExtra("id+1",list.get(position+1).getId());
             intent2.putExtra("restart",0);
+
             startService(intent2);
             bindService(intent2, // intent 객체
-                   conn, // 서비스와 연결에 대한 정의
-                    Context.BIND_AUTO_CREATE);
+                  conn, // 서비스와 연결에 대한 정의
+                   Context.BIND_AUTO_CREATE);
 
 
         }

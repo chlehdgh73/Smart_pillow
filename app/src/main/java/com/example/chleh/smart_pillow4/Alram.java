@@ -228,7 +228,8 @@ public class Alram extends AppCompatActivity {
                 if (SDK_INT >= Build.VERSION_CODES.M) {//API 버전 23이상 쩝....
                    // Toast.makeText(getApplicationContext(), String.format("%d %d %d %d %d",A_date.getYear(),A_date.getMonth()+1,A_date.getDayOfMonth(),A_time.getHour(),A_time.getMinute()), Toast.LENGTH_LONG).show();
                     //주마다 하는거나 매일 하는거 함수 만들기!
-                            alram_item.add(String.format("%d년 %d월 %d일 %d시 %d분",A_date.getYear(),(A_date.getMonth()+1),A_date.getDayOfMonth(),A_time.getHour(),A_time.getMinute()));
+                    alram_item.add(String.format("%d년 %d월 %d일 %d시 %d분",A_date.getYear(),(A_date.getMonth()+1),A_date.getDayOfMonth(),A_time.getHour(),A_time.getMinute()));
+
                     adapter.notifyDataSetChanged();
                     Calendar cal= Calendar.getInstance();
 
@@ -516,13 +517,22 @@ public class Alram extends AppCompatActivity {
         }
     }
 
-/*
-파일 쓰기
- */
+void setReceiver()
+{
+    IntentFilter filter = new IntentFilter();
+    filter.addAction("STATE_CHANGE_NOTIFY");
+
+  //  registerReceiver(MyReceiver,filter);
+
+
+}
+
+
 
 void setAlram(Calendar cal)
 {
     Intent intent = new Intent(Alram.this,MyReceiver.class);
+   //엑스트라 넣어서
     PendingIntent sender = PendingIntent.getBroadcast(Alram.this,0,intent,0);
     AlarmManager am = (AlarmManager)getSystemService(Context.ALARM_SERVICE);
     am.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP,cal.getTimeInMillis(),sender);//

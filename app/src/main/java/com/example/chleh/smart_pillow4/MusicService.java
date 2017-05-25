@@ -34,7 +34,7 @@ public class MusicService extends Service {
     @Override
         public boolean onUnbind(Intent intent){
         Log.i("정보 : ","onUnbind 호출");
-       // mediaPlayer.pause();
+     //  mediaPlayer.pause();
         return true;
     }
     @Override
@@ -62,11 +62,11 @@ public class MusicService extends Service {
                 public void onCompletion(MediaPlayer mp) {
                     if(intent.getIntExtra("position",0)<intent.getIntExtra("size",0)) {
                        try {
-                           Uri musicURI = Uri.withAppendedPath(MediaStore.Audio.Media.EXTERNAL_CONTENT_URI, "" + intent.getStringExtra("id"));
-                           mediaPlayer.reset();
+                          Uri musicURI = Uri.withAppendedPath(MediaStore.Audio.Media.EXTERNAL_CONTENT_URI, "" + intent.getStringExtra("id+1"));
+                        mediaPlayer.reset();
                            mediaPlayer.setDataSource(getApplicationContext(), musicURI);
-                           mediaPlayer.prepare();
-                           mediaPlayer.start();
+                         mediaPlayer.prepare();
+                          mediaPlayer.start();
                        }
                        catch (Exception e)
                        {
@@ -102,16 +102,7 @@ public class MusicService extends Service {
     @Override
     public int onStartCommand(Intent intent, int flags, int startId)
             {
-                try {
-                    Uri musicURI = Uri.withAppendedPath(MediaStore.Audio.Media.EXTERNAL_CONTENT_URI, "" + intent.getStringExtra("id"));
-                    mediaPlayer.reset();
-                    mediaPlayer.setDataSource(this, musicURI);
-                    mediaPlayer.prepare();
-                    mediaPlayer.start();
-                }
-                catch (Exception e) {
-                    Log.e("SimplePlayer", e.getMessage());
-                }
+
         return START_STICKY;
     }
 

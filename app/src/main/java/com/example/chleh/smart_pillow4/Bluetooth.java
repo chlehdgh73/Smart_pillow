@@ -1,145 +1,288 @@
 package com.example.chleh.smart_pillow4;
 
-import android.app.Activity;
+import android.Manifest;
+import android.app.AlertDialog;
+import android.content.BroadcastReceiver;
+import android.content.ComponentName;
+import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
-import android.os.Bundle;
-import android.os.Handler;
-import android.os.Message;
-import android.support.design.widget.FloatingActionButton;
-import android.support.design.widget.Snackbar;
+import android.content.IntentFilter;
+import android.content.ServiceConnection;
+import android.content.pm.PackageManager;
+import android.location.LocationManager;
+import android.os.IBinder;
+import android.provider.Settings;
+import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
-import android.support.v7.widget.Toolbar;
+import android.os.Bundle;
 import android.util.Log;
-import android.view.Menu;
-import android.view.MenuItem;
 import android.view.View;
+import android.widget.AdapterView;
+import android.widget.ArrayAdapter;
 import android.widget.Button;
-import android.widget.Toast;
+import android.widget.ListView;
 
 public class Bluetooth extends AppCompatActivity {
-    private static final String TAG = "Bluetooth";
-    private static final int REQUEST_CONNECT_DEVICE =1;
-    private static final int REQUEST_ENABLE_BT =2;
-    private static final boolean D=true;
-    public static final int MESSAGE_STATE_CHANGE=1;
-    private Button btn_Connect;
-    private BluetoothService bluetoothService_obj = null;
-private Handler mHandler = new Handler()
-{
-    public void handlerMessage(Message msg)
-    {
-        super.handleMessage(msg);
-        switch (msg.what){
+    private Button button1, button2, button3;
+    private ListView listview;
+    private ArrayAdapter<String> device_adapter;
+    private BLEService bluetooth_service = null;
+    private Context context = this;
 
-            case MESSAGE_STATE_CHANGE:
-                if(D) Log.i(TAG,"MESSAGE_STATE_CHANGE"+msg.arg1);
-            switch (msg.arg1)
-            {
-                case BluetoothService.STATE_CONNECTED :
-                    Toast.makeText(getApplicationContext(),"블루투스 성공",Toast.LENGTH_SHORT).show();
-                break;
-                case BluetoothService.STATE_FAIL:
-                    Toast.makeText(getApplicationContext(),"실패",Toast.LENGTH_SHORT).show();
-                break;
-            }
-        break;
+
+    private final ServiceConnection mServiceConnection = new ServiceConnection() {
+        @Override
+        public void onServiceConnected(ComponentName componentName, IBinder service) {
+            bluetooth_service = ((BLEService.LocalBinder) service).getService();
+            Log.i("정보 : ","service_connect 호출");
+            // Automatically connects to the device upon successful start-up initialization.
         }
 
-    }
-};
+        @Override
+        public void onServiceDisconnected(ComponentName componentName) {
+            bluetooth_service = null;
+            Log.i("정보 : ","service_disconnect 호출");
+        }
+    };
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        Log.e(TAG,"onCreate");
+        setContentView(R.layout.activity_bluetooth2);
+        button1 = (Button)findViewById(R.id.button1);
+        button2 = (Button)findViewById(R.id.button2);
+        button3 = (Button)findViewById(R.id.button3);
+        listview = (ListView)findViewById(R.id.listView);
 
-        setContentView(R.layout.activity_bluetooth);
-        Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
-        setSupportActionBar(toolbar);
+        device_adapter = new ArrayAdapter<>(this,android.R.layout.simple_list_item_1);
+        listview.setAdapter(device_adapter);
+
+        check();
+
+        Intent service = new Intent(this, BLEService.class);
+        startService(service);
+
+        bindService(service, mServiceConnection, 0);
+
+        listview.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+            @Override
+            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+                if(bluetooth_service != null) {
+                    bluetooth_service.select_device(device_adapter.getItem(position));
+
+                    AlertDialog.Builder builder = new AlertDialog.Builder(context);
+                    builder
+                            .setTitle("알림.")
+                            .setMessage("선택되었습니다.")
+                            .setCancelable(true)
+                            .setPositiveButton("확인",new DialogInterface.OnClickListener(){
+                                public void onClick(DialogInterface dialog, int button){
+                                    dialog.cancel();
+                                }
+                            });
+                    AlertDialog dialog = builder.create();
+                    dialog.show();
+
+                    re_scan_device();
+                }
+            }
+        });
+
+        View.OnClickListener listener = new View.OnClickListener(){
+            @Override
+            public void onClick(View v){
+                switch(v.getId()){
+                    case R.id.button1:
+                        if(!re_scan_device()){
+                            AlertDialog.Builder builder = new AlertDialog.Builder(context);
+
+                            builder
+                                    .setTitle("검색에 실패했습니다.")
+                                    .setMessage("잠시후에 다시시도해주세요.")
+                                    .setCancelable(true)
+                                    .setPositiveButton("확인",new DialogInterface.OnClickListener(){
+                                        public void onClick(DialogInterface dialog, int button){
+                                            dialog.cancel();
+                                        }
+                                    });
+
+                            AlertDialog dialog = builder.create();
+                            dialog.show();
+                        }
+                        break;
+
+                    case R.id.button2:
+                        if(bluetooth_service != null){
+                            boolean connection_state = bluetooth_service.query_connection();
+                            AlertDialog.Builder builder = new AlertDialog.Builder(context);
+                            builder
+                                    .setTitle("상태.");
+                            if(connection_state) {
+                                builder.setMessage("연결되어있습니다.");
+                            }
+                            else{
+                                builder.setMessage("연결되어있지않습니다.");
+                            }
+                            builder
+                                    .setCancelable(true)
+                                    .setPositiveButton("확인",new DialogInterface.OnClickListener(){
+                                        public void onClick(DialogInterface dialog, int button){
+                                            dialog.cancel();
+                                        }
+                                    });
+                            AlertDialog dialog = builder.create();
+                            dialog.show();
+
+                        }
+                        break;
+
+                    case R.id.button3:
+                        if(bluetooth_service != null){
+                            bluetooth_service.select_device("");
+                            if(!bluetooth_service.query_connection()){
+                                AlertDialog.Builder builder = new AlertDialog.Builder(context);
+                                builder
+                                        .setTitle("알림.")
+                                        .setMessage("해제되었습니다.")
+                                        .setCancelable(true)
+                                        .setPositiveButton("확인",new DialogInterface.OnClickListener(){
+                                            public void onClick(DialogInterface dialog, int button){
+                                                dialog.cancel();
+                                            }
+                                        });
+                                AlertDialog dialog = builder.create();
+                                dialog.show();
+                            }
+                        }
+
+                        break;
+                }
+            }
+        };
+
+        button1.setOnClickListener(listener);
+        button2.setOnClickListener(listener);
+        button3.setOnClickListener(listener);
 
 
-        btn_Connect=(Button)findViewById(R.id.bluetooth_connect);
-        btn_Connect.setOnClickListener(mClickListener);
-
-
-        if(bluetoothService_obj==null)
-        {
-            bluetoothService_obj = new BluetoothService(this,mHandler);
-        }
 
     }
-    private View.OnClickListener mClickListener = new View.OnClickListener() {
-        @Override
-        public void onClick(View v) {
-            //분기.
-            switch ( v.getId() ){
+    @Override
+    public void onResume(){
+        super.onResume();
+        IntentFilter filter1 = new IntentFilter(BLEService.BLE_NOTIFY);
+        IntentFilter filter2 = new IntentFilter(BLEService.BLE_WARNING);
+        registerReceiver(mReceiver, filter1);
+        registerReceiver(mReceiver, filter2);
+    }
 
-                case R.id.bluetooth_connect :  //모든 블루투스의 활성화는 블루투스 서비스 객체를 통해 접근한다.
+    @Override
+    public void onPause(){
+        super.onPause();
+        unregisterReceiver(mReceiver);
+    }
 
-                    if(bluetoothService_obj.getDeviceState()) // 블루투스 기기의 지원여부가 true 일때
-                    {
-                        bluetoothService_obj.enableBluetooth();  //블루투스 활성화 시작.
-                    }
-                    else
-                    {
-                        finish();
-                    }
-                    break ;
-
-                default: break ;
-
-            }//switch
+    public boolean re_scan_device(){
+        device_adapter.clear();
+        device_adapter.notifyDataSetChanged();
+        if(bluetooth_service != null){
+            return bluetooth_service.reScan_device();
         }
-    };
-    public void onActivityResult(int requestCode, int resultCode, Intent data)
-    {
-        Log.d(TAG, "onActivityResult" + resultCode);
-        // TODO Auto-generated method stub
+        return false;
+    }
 
-        switch(requestCode)
-        {
+    public void check(){
+        //gps기능(위치기능)켜져있는지 확인
+        LocationManager locate = (LocationManager)getSystemService(LOCATION_SERVICE);
+        if(!locate.isProviderEnabled(LocationManager.GPS_PROVIDER)){
+            alert_on_gps();
+        }
 
-           case REQUEST_ENABLE_BT:
-                //When the request to enable Bluetooth returns
-                if(resultCode != Activity.RESULT_OK)  //취소를 눌렀을 때
-                {
-                    bluetoothService_obj.scanDevice();
-                }
-              else
-                {
-                    Log.d(TAG,"bluetooth is not enable");
+        int permission_fine = ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION);
+        int permission_coarse = ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION);
 
-                }
-            break;
-            case REQUEST_CONNECT_DEVICE:
-                if(requestCode == Activity.RESULT_OK)
-                {
-                        bluetoothService_obj.getDeviceInfo(data);
+        if(permission_fine != PackageManager.PERMISSION_GRANTED || permission_coarse != PackageManager.PERMISSION_GRANTED) {
+            requestPermissions(new String[]{Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION}, 100);
+        }
+    }
+
+    private void alert_on_gps(){
+        AlertDialog.Builder builder = new AlertDialog.Builder(context);
+        builder
+                .setTitle("알림.")
+                .setMessage("블루투스4.0을 사용하기 위한 GPS기능이 켜져있지 않습니다.\nGPS기능을 켜주세요.")
+                .setCancelable(false)
+                .setPositiveButton("켜기",new DialogInterface.OnClickListener(){
+                    public void onClick(DialogInterface dialog, int button){
+                        Intent gps_intent= new Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS);
+                        startActivity(gps_intent);
+                    }
+                })
+                .setNegativeButton("취소",new DialogInterface.OnClickListener(){
+                    public void onClick(DialogInterface dialog, int button){
+                        dialog.cancel();
+                    }
+                });
+        AlertDialog dialog = builder.create();
+        dialog.show();
+    }
+
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, String[] Permission, int[] grantResults){
+        switch (requestCode){
+            case 100:
+                if(grantResults[0] != PackageManager.PERMISSION_GRANTED || grantResults[1] != PackageManager.PERMISSION_GRANTED){
+                    AlertDialog.Builder builder = new AlertDialog.Builder(context);
+                    builder
+                            .setTitle("알림.")
+                            .setMessage("블루투스4.0을 사용하기 위한 위치권한을 얻지 못했습니다.\n설정->앱 에서 위치권한을 켜주세요.")
+                            .setCancelable(true)
+                            .setPositiveButton("설정하기",new DialogInterface.OnClickListener(){
+                                public void onClick(DialogInterface dialog, int button){
+                                    Intent app_intent= new Intent(Settings.ACTION_MANAGE_APPLICATIONS_SETTINGS);
+                                    startActivity(app_intent);
+                                }
+                            })
+                            .setNegativeButton("취소",new DialogInterface.OnClickListener(){
+                                public void onClick(DialogInterface dialog, int button){
+                                    dialog.cancel();
+                                }
+                            });
+                    AlertDialog dialog = builder.create();
+                    dialog.show();
                 }
                 break;
         }
-
     }
 
-    @Override
-    public boolean onCreateOptionsMenu(Menu menu) {
-        // Inflate the menu; this adds items to the action bar if it is present.
-        getMenuInflater().inflate(R.menu.menu_main, menu);
-        return true;
-    }
+    BroadcastReceiver mReceiver = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            String action = intent.getAction();
 
-    @Override
-    public boolean onOptionsItemSelected(MenuItem item) {
-        // Handle action bar item clicks here. The action bar will
-        // automatically handle clicks on the Home/Up button, so long
-        // as you specify a parent activity in AndroidManifest.xml.
-        int id = item.getItemId();
-
-        //noinspection SimplifiableIfStatement
-        if (id == R.id.action_settings) {
-            return true;
+            if(action.equals(BLEService.BLE_NOTIFY)){
+                device_adapter.add(intent.getStringExtra(BLEService.DEVICE_ADDRESS));
+                device_adapter.notifyDataSetChanged();
+            }
+            else if(action.equals(BLEService.BLE_WARNING)){
+                AlertDialog.Builder builder = new AlertDialog.Builder(context);
+                builder
+                        .setTitle("경고")
+                        .setMessage("블루투스 강제종료등의 이유로 블루투스 장비의 일시적인 문제가 생겼습니다.\n장비와 스마트폰의 블루투스기능을 끄고 몇분뒤에 다시 켜주세요")
+                        .setCancelable(true)
+                        .setPositiveButton("확인",new DialogInterface.OnClickListener(){
+                            public void onClick(DialogInterface dialog, int button){
+                                dialog.cancel();
+                            }
+                        });
+                AlertDialog dialog = builder.create();
+                dialog.show();
+            }
         }
+    };
 
-        return super.onOptionsItemSelected(item);
-    }
+
 }

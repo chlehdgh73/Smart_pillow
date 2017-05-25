@@ -12,11 +12,22 @@ import java.util.StringTokenizer;
 
 public class MyReceiver extends BroadcastReceiver {
     @Override
+
     public void onReceive(Context context, Intent intent) {
         // TODO: This method is called when the BroadcastReceiver is receiving
         // an Intent broadcast.
-        Intent intent1 =new Intent(context,Alram_Service.class);
-        context.startService(intent1);
+
+        String action =intent.getAction();
+        if(action.equals("STATE_CHANGE_NOTIFY"))
+        {
+
+
+        }
+        else
+        {
+            Intent intent1 =new Intent(context,Alram_Service.class);
+            context.startService(intent1);
+        }
 
     }
 }

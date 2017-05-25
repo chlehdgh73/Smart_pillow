@@ -20,9 +20,7 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.List;
 
-/**
- * Created by 상일 on 2016-06-19.
- */
+
 public class MyAdapter extends BaseAdapter {
 
     List<MusicDto> list;
