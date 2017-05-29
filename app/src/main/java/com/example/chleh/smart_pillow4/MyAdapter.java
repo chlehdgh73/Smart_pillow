@@ -35,6 +35,10 @@ public class MyAdapter extends BaseAdapter {
         this.activity = activity;
         inflater = (LayoutInflater) activity.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
     }
+    public MyAdapter(Activity activity, int type, List<MusicDto> list)
+    {
+
+    }
 
     @Override
     public int getCount() {
@@ -119,7 +123,6 @@ public class MyAdapter extends BaseAdapter {
                         b = tmp;
                     }
                 }
-
                 return b;
             } catch (FileNotFoundException e) {
             } finally {

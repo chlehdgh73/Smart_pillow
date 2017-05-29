@@ -72,7 +72,7 @@ public class Main extends AppCompatActivity {
             public void onClick(View arg0) {
 
 
-                Intent k = new Intent(getApplicationContext(), Music.class);
+                Intent k = new Intent(getApplicationContext(), MusicFolder.class);
                 startActivity(k);
             }
         });

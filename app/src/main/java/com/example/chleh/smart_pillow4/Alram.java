@@ -3,12 +3,15 @@ package com.example.chleh.smart_pillow4;
 import android.app.AlarmManager;
 import android.app.PendingIntent;
 import android.content.BroadcastReceiver;
+import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.content.ServiceConnection;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
+import android.os.IBinder;
 import android.os.Message;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
@@ -66,6 +69,12 @@ public class Alram extends AppCompatActivity {
     public static int size;
 
 
+
+
+
+
+
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
 
@@ -73,7 +82,7 @@ public class Alram extends AppCompatActivity {
         setContentView(R.layout.activity_alram);
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
-        final boolean pattern[]=new boolean[7];
+        final boolean pattern[]=new boolean[8];
           AlarmManager am = (AlarmManager)getSystemService(Context.ALARM_SERVICE);
         final DatePicker A_date=(DatePicker)findViewById(R.id.datePicker);
         final TimePicker A_time=(TimePicker)findViewById(R.id.timePicker);
@@ -136,22 +145,6 @@ public class Alram extends AppCompatActivity {
                 //시험용
                 if(mon.isChecked())
                 {
-                    pattern[1]=true;
-                }
-                else
-                {
-                    pattern[1]=false;
-                }
-
-            }
-        });
-        tue.setOnClickListener(new View.OnClickListener() {
-
-            @Override
-            public void onClick(View v) {
-                //시험용
-                if(mon.isChecked())
-                {
                     pattern[2]=true;
                 }
                 else
@@ -161,12 +154,12 @@ public class Alram extends AppCompatActivity {
 
             }
         });
-        wen.setOnClickListener(new View.OnClickListener() {
+        tue.setOnClickListener(new View.OnClickListener() {
 
             @Override
             public void onClick(View v) {
                 //시험용
-                if(mon.isChecked())
+                if(tue.isChecked())
                 {
                     pattern[3]=true;
                 }
@@ -177,12 +170,12 @@ public class Alram extends AppCompatActivity {
 
             }
         });
-        thu.setOnClickListener(new View.OnClickListener() {
+        wen.setOnClickListener(new View.OnClickListener() {
 
             @Override
             public void onClick(View v) {
                 //시험용
-                if(mon.isChecked())
+                if(wen.isChecked())
                 {
                     pattern[4]=true;
                 }
@@ -193,12 +186,12 @@ public class Alram extends AppCompatActivity {
 
             }
         });
-        fri.setOnClickListener(new View.OnClickListener() {
+        thu.setOnClickListener(new View.OnClickListener() {
 
             @Override
             public void onClick(View v) {
                 //시험용
-                if(mon.isChecked())
+                if(thu.isChecked())
                 {
                     pattern[5]=true;
                 }
@@ -209,12 +202,12 @@ public class Alram extends AppCompatActivity {
 
             }
         });
-        sat.setOnClickListener(new View.OnClickListener() {
+        fri.setOnClickListener(new View.OnClickListener() {
 
             @Override
             public void onClick(View v) {
                 //시험용
-                if(mon.isChecked())
+                if(fri.isChecked())
                 {
                     pattern[6]=true;
                 }
@@ -225,18 +218,34 @@ public class Alram extends AppCompatActivity {
 
             }
         });
+        sat.setOnClickListener(new View.OnClickListener() {
+
+            @Override
+            public void onClick(View v) {
+                //시험용
+                if(sat.isChecked())
+                {
+                    pattern[7]=true;
+                }
+                else
+                {
+                    pattern[7]=false;
+                }
+
+            }
+        });
         sun.setOnClickListener(new View.OnClickListener() {
 
             @Override
             public void onClick(View v) {
                 //시험용
-                if(mon.isChecked())
+                if(sun.isChecked())
                 {
-                    pattern[0]=true;
+                    pattern[1]=true;
                 }
                 else
                 {
-                    pattern[0]=false;
+                    pattern[1]=false;
                 }
 
             }
@@ -287,8 +296,8 @@ public class Alram extends AppCompatActivity {
                        //월
                         out.print((A_date.getMonth()+1));
                         out.print(",");
-                        //주의 첫번째 일
-                        out.print(A_date.getFirstDayOfWeek());
+                        //요일 변수
+                        out.print(dayofweek);
                         out.print(",");
                         //일
                         out.print((A_date.getDayOfMonth()));
@@ -300,11 +309,6 @@ public class Alram extends AppCompatActivity {
                         out.print(A_time.getMinute());
                         out.print(",");
                         //
-                        if(pattern[0]==false)
-                            out.print(0);
-                        else
-                            out.print(1);
-                        out.print(",");
                         if(pattern[1]==false)
                             out.print(0);
                         else
@@ -335,8 +339,14 @@ public class Alram extends AppCompatActivity {
                         else
                             out.print(1);
                         out.print(",");
+                        if(pattern[7]==false)
+                            out.print(0);
+                        else
+                            out.print(1);
+                        out.print(",");
 
                         out.close();
+                        fos.close();
                        // fileWriter.close();
 
                     }
@@ -399,7 +409,7 @@ public class Alram extends AppCompatActivity {
                             out.print(alram_infor_list.get(i).putMonth());
                             out.print(",");
                             //주의 첫번째 일
-                            out.print(alram_infor_list.get(i).putdayoffirst());
+                            out.print(alram_infor_list.get(i).putOrderDay());
                             out.print(",");
                             //일
                             out.print(alram_infor_list.get(i).putDay());
@@ -411,11 +421,6 @@ public class Alram extends AppCompatActivity {
                             out.print(alram_infor_list.get(i).putMin());
                             out.print(",");
                             //
-                            if (alram_infor_list.get(i).putPattern(0) == false)
-                                out.print(0);
-                            else
-                                out.print(1);
-                            out.print(",");
                             if (alram_infor_list.get(i).putPattern(1) == false)
                                 out.print(0);
                             else
@@ -440,15 +445,22 @@ public class Alram extends AppCompatActivity {
                                 out.print(0);
                             else
                                 out.print(1);
-                            out.write(",");
+                            out.print(",");
                             if (alram_infor_list.get(i).putPattern(6) == false)
                                 out.print(0);
                             else
                                 out.print(1);
                             out.write(",");
-                            out.close();
+                            if (alram_infor_list.get(i).putPattern(7) == false)
+                                out.print(0);
+                            else
+                                out.print(1);
+                            out.write(",");
+
                             // fileWriter.close();*/
                         }
+                        out.close();
+                        fos.close();
                     }
                     catch (Exception e)
                     {
@@ -479,7 +491,7 @@ public class Alram extends AppCompatActivity {
      */
    void SetDay(boolean[] pattern2)
    {
-       for(int i=0;i<7;i++)
+       for(int i=1;i<8;i++)
        {
            pattern2[i]=false;
        }
@@ -491,7 +503,7 @@ public class Alram extends AppCompatActivity {
         BufferedReader bufferReader;
                 // 파일 내용 읽어오기
                 try {
-                     fis = openFileInput("myFile.txt");
+                    fis = openFileInput("myFile.txt");
                     bufferReader = new BufferedReader(new InputStreamReader(fis));
                     String content="", temp="";
                     while( (temp = bufferReader.readLine()) != null ) {
@@ -510,7 +522,7 @@ public class Alram extends AppCompatActivity {
                         int temp_day=0;
                         int temp_hour=0;
                         int temp_min=0;
-                        boolean[] temp_pa= new boolean[7];
+                        boolean[] temp_pa= new boolean[8];
                         if(temp.equals(""))
                            continue;
                         temp_year=Integer.parseInt(tokens.nextToken(","));
@@ -519,7 +531,7 @@ public class Alram extends AppCompatActivity {
                         temp_day=Integer.parseInt(tokens.nextToken(","));
                         temp_hour=Integer.parseInt(tokens.nextToken(","));
                         temp_min=Integer.parseInt(tokens.nextToken(","));
-                        for(int i=0;i<=6;i++)
+                        for(int i=1;i<=7;i++)
                         {
                             temp_pa[i]=decide(Integer.parseInt(tokens.nextToken(",")));
                         }
@@ -565,11 +577,15 @@ void setReceiver()
 
 void setAlram(Calendar cal)
 {
-
     Intent intent = new Intent(Alram.this,MyReceiver.class);
    //엑스트라 넣어서
     GregorianCalendar temp= new GregorianCalendar();
     int start_time=cal.get(Calendar.MINUTE)+cal.get(Calendar.HOUR_OF_DAY)*100+cal.get(Calendar.DAY_OF_MONTH)*10000+(cal.get(Calendar.MONTH)+1)*1000000;
+    intent.putExtra("YEAR",cal.get(Calendar.YEAR));
+    intent.putExtra("MONTH",cal.get(Calendar.MONTH)+1);
+    intent.putExtra("DAY",cal.get(Calendar.DAY_OF_MONTH));
+    intent.putExtra("MIN",cal.get(Calendar.MINUTE));
+    intent.putExtra("HOUR",cal.get(Calendar.HOUR_OF_DAY));
     PendingIntent sender = PendingIntent.getBroadcast(Alram.this,start_time,intent,0);
     AlarmManager am = (AlarmManager)getSystemService(Context.ALARM_SERVICE);
     am.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP,cal.getTimeInMillis(),sender);//
