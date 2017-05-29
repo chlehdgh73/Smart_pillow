@@ -32,7 +32,6 @@ public class Music extends AppCompatActivity {
         MyAdapter adapter = new MyAdapter(this,list);
         listView.setAdapter(adapter);
 
-
         listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
@@ -44,7 +43,6 @@ public class Music extends AppCompatActivity {
         });
     }
 
-
     public  void getMusicList(){
         list = new ArrayList<>();
         //가져오고 싶은 컬럼 명을 나열합니다. 음악의 아이디, 앰블럼 아이디, 제목, 아스티스트 정보를 가져옵니다.
@@ -53,7 +51,6 @@ public class Music extends AppCompatActivity {
                 MediaStore.Audio.Media.TITLE,
                 MediaStore.Audio.Media.ARTIST
         };
-
         Cursor cursor =this.getApplicationContext().getContentResolver().query(MediaStore.Audio.Media.EXTERNAL_CONTENT_URI,
                 projection, null, null, null);
 

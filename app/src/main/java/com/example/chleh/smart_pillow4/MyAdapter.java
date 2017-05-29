@@ -54,7 +54,7 @@ public class MyAdapter extends BaseAdapter {
     @Override
     public View getView(final int position, View convertView, ViewGroup parent) {
         if (convertView == null) {
-            convertView = inflater.inflate(R.layout.listview_item, parent, false);
+                convertView = inflater.inflate(R.layout.listview_item, parent, false);
             LinearLayout.LayoutParams layoutParams = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT);
             convertView.setLayoutParams(layoutParams);
         }

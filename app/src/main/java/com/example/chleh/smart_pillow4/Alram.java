@@ -8,6 +8,8 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Message;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
 import android.support.v7.app.AppCompatActivity;
@@ -33,14 +35,35 @@ import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.GregorianCalendar;
 import java.util.Iterator;
 import java.util.StringTokenizer;
 
 import static android.os.Build.VERSION.SDK_INT;
 
 public class Alram extends AppCompatActivity {
+    final boolean pattern[]=new boolean[7];
+     DatePicker A_date;
+     TimePicker A_time;
+     ArrayList<String> alram_item ;
+     ArrayAdapter adapter;
+     ToggleButton mon;
+     ToggleButton tue;
+     ToggleButton wen;
+     ToggleButton thu;
+     ToggleButton fri;
+     ToggleButton sat;
+     ToggleButton sun;
+     ArrayList<Alram_Infor> alram_infor_list;
 
-
+     Calendar m;
+    String dirPath ;
+     String dirfile;
+     File savefile ;
+    File file ;
+   public static PendingIntent sender= null;
+    public static AlarmManager am = null;
+    public static int size;
 
 
     @Override
@@ -50,8 +73,8 @@ public class Alram extends AppCompatActivity {
         setContentView(R.layout.activity_alram);
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
-
-         final boolean pattern[]=new boolean[7];
+        final boolean pattern[]=new boolean[7];
+          AlarmManager am = (AlarmManager)getSystemService(Context.ALARM_SERVICE);
         final DatePicker A_date=(DatePicker)findViewById(R.id.datePicker);
         final TimePicker A_time=(TimePicker)findViewById(R.id.timePicker);
         final ArrayList<String> alram_item =new ArrayList<String>();
@@ -64,12 +87,13 @@ public class Alram extends AppCompatActivity {
         final ToggleButton sat=(ToggleButton)findViewById(R.id.Btn_sat);
         final ToggleButton sun=(ToggleButton)findViewById(R.id.Btn_sun);
         final ArrayList<Alram_Infor> alram_infor_list= new ArrayList<Alram_Infor>();
-        final AlarmManager am = (AlarmManager)getSystemService(Context.ALARM_SERVICE);
+
         final Calendar m=Calendar.getInstance();
         String dirPath = getFilesDir().getAbsolutePath();
         final String dirfile=String.format(dirPath+"/Alram3.txt");
         final File savefile = new File(dirPath+"/Alram3.txt");
         File file =new File("myFile.txt");
+
 
         /*
         반복되는 요일정보 setting
@@ -323,8 +347,15 @@ public class Alram extends AppCompatActivity {
                     setAlram(cal);//알람 설정
                 }
                 SetDay(pattern);
-
-
+                 size=alram_infor_list.size();
+                mon.setChecked(false);
+                thu.setChecked(false);
+                wen.setChecked(false);
+                tue.setChecked(false);
+                fri.setChecked(false);
+                sat.setChecked(false);
+                sun.setChecked(false);
+                adapter.notifyDataSetChanged();;
             }
         });
 
@@ -342,7 +373,11 @@ public class Alram extends AppCompatActivity {
             count = adapter.getCount();
                 if(count>0){
                     checked =alram_list.getCheckedItemPosition();
-
+                   int temp= alram_infor_list.get(checked).putMin()+alram_infor_list.get(checked).putHour()*100+alram_infor_list.get(checked).putDay()*10000+alram_infor_list.get(checked).putMonth()*1000000;
+                    Intent intent = new Intent(Alram.this,MyReceiver.class);
+                    sender = PendingIntent.getBroadcast(Alram.this,temp,intent,0);
+                    AlarmManager am = (AlarmManager)getSystemService(Context.ALARM_SERVICE);
+                    am.cancel(sender);
                     if(checked > -1 &&checked < count)
                     {
                         alram_item.remove(checked);
@@ -354,7 +389,7 @@ public class Alram extends AppCompatActivity {
                     try {
                         fos = openFileOutput("myFile.txt",MODE_PRIVATE);
                         PrintWriter out= new PrintWriter(fos);
-                        int size =alram_infor_list.size();
+                         size =alram_infor_list.size();
 
                         for(int i=0;i<size;i++) {
                             out.println("");
@@ -457,7 +492,6 @@ public class Alram extends AppCompatActivity {
                 // 파일 내용 읽어오기
                 try {
                      fis = openFileInput("myFile.txt");
-
                     bufferReader = new BufferedReader(new InputStreamReader(fis));
                     String content="", temp="";
                     while( (temp = bufferReader.readLine()) != null ) {
@@ -531,14 +565,13 @@ void setReceiver()
 
 void setAlram(Calendar cal)
 {
+
     Intent intent = new Intent(Alram.this,MyReceiver.class);
    //엑스트라 넣어서
-    PendingIntent sender = PendingIntent.getBroadcast(Alram.this,0,intent,0);
+    GregorianCalendar temp= new GregorianCalendar();
+    int start_time=cal.get(Calendar.MINUTE)+cal.get(Calendar.HOUR_OF_DAY)*100+cal.get(Calendar.DAY_OF_MONTH)*10000+(cal.get(Calendar.MONTH)+1)*1000000;
+    PendingIntent sender = PendingIntent.getBroadcast(Alram.this,start_time,intent,0);
     AlarmManager am = (AlarmManager)getSystemService(Context.ALARM_SERVICE);
     am.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP,cal.getTimeInMillis(),sender);//
 }
-
-
-
-
 }

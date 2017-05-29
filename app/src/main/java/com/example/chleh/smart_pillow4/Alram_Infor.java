@@ -68,6 +68,7 @@ public class Alram_Infor {
     }
 
 
+
     int putYear()
     {
         return this.year;
@@ -98,6 +99,8 @@ public class Alram_Infor {
         this.pattern[i]=pattern[i];
 
     }
+
+
     boolean  putPattern(int a)
     {
         return this.pattern[a];
