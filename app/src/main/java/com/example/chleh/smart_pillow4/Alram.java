@@ -40,68 +40,125 @@ import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.GregorianCalendar;
 import java.util.Iterator;
+import java.util.List;
+import java.util.Random;
 import java.util.StringTokenizer;
 
 import static android.os.Build.VERSION.SDK_INT;
 
 public class Alram extends AppCompatActivity {
-    final boolean pattern[]=new boolean[7];
-     DatePicker A_date;
-     TimePicker A_time;
-     ArrayList<String> alram_item ;
-     ArrayAdapter adapter;
-     ToggleButton mon;
-     ToggleButton tue;
-     ToggleButton wen;
-     ToggleButton thu;
-     ToggleButton fri;
-     ToggleButton sat;
-     ToggleButton sun;
-     ArrayList<Alram_Infor> alram_infor_list;
 
-     Calendar m;
-    String dirPath ;
-     String dirfile;
-     File savefile ;
-    File file ;
-   public static PendingIntent sender= null;
-    public static AlarmManager am = null;
-    public static int size;
+    private ArrayList<String> alram_item;
+    private boolean pattern[];
+    private TimePicker A_time;
+    private ArrayAdapter adapter;
+    private ListView alram_list;//알람 리스트
+    private ToggleButton mon;
+    private ToggleButton tue;
+    private ToggleButton wen;
+    private ToggleButton thu;
+    private ToggleButton fri;
+    private ToggleButton sat;
+    private ToggleButton sun;
 
+    private Alram_Service alram_service = null;
 
+    private final ServiceConnection mServiceConnection = new ServiceConnection() {
+        @Override
+        public void onServiceConnected(ComponentName componentName, IBinder service) {
+            alram_service = ((Alram_Service.LocalBinder) service).getService();
+            int i;
+            List<Alram_Infor> temp = alram_service.getAlram_list();
+            alram_item.clear();
+            for(i = 0 ; i < temp.size() ; i++){
+                alram_item.add(changeItem(temp.get(i)));
+            }
+            adapter.notifyDataSetChanged();
+            // Automatically connects to the device upon successful start-up initialization.
+        }
 
+        @Override
+        public void onServiceDisconnected(ComponentName componentName) {
+            alram_service = null;
+        }
+    };
 
+    BroadcastReceiver mBroadcastRecevier = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            String action = intent.getAction();
 
+            if(action.equals(Alram_Service.ALRAM_DONE)){
+                List<Alram_Infor> temp = alram_service.getAlram_list();
+                alram_item.clear();
+                int i;
+                for(i = 0 ; i < temp.size() ; i++){
+                    alram_item.add(changeItem(temp.get(i)));
+                }
+                adapter.notifyDataSetChanged();
+            }
+        }
+    };
 
+    public String changeItem(Alram_Infor item)
+    {
+        String result;
+        result=String.format("%d일 %d시 %d분",item.getDay(),item.getHour(),item.getMin());
+        if(pattern[2]==true)
+        {
+            result+=" 월";
+        }
+        if(pattern[3]==true)
+        {
+            result+=" 화";
+        }
+        if(pattern[4]==true)
+        {
+            result+=" 수";
+        }
+        if(pattern[5]==true)
+        {
+            result+=" 목";
+        }
+        if(pattern[6]==true)
+        {
+            result+=" 금";
+        }
+        if(pattern[7]==true)
+        {
+            result+=" 토";
+        }
+        if(pattern[1]==true)
+        {
+            result+=" 일";
+        }
+        return result;
+
+    }
 
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
-
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_alram);
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
-        final boolean pattern[]=new boolean[8];
-          AlarmManager am = (AlarmManager)getSystemService(Context.ALARM_SERVICE);
-        final DatePicker A_date=(DatePicker)findViewById(R.id.datePicker);
-        final TimePicker A_time=(TimePicker)findViewById(R.id.timePicker);
-        final ArrayList<String> alram_item =new ArrayList<String>();
-        final ArrayAdapter adapter = new ArrayAdapter(this,android.R.layout.simple_list_item_single_choice,alram_item);
-        final ToggleButton mon=(ToggleButton)findViewById(R.id.Btn_mon);
-        final ToggleButton tue=(ToggleButton)findViewById(R.id.Btn_tue);
-        final ToggleButton wen=(ToggleButton)findViewById(R.id.Btn_wen);
-        final ToggleButton thu=(ToggleButton)findViewById(R.id.Btn_thu);
-        final ToggleButton fri=(ToggleButton)findViewById(R.id.Btn_fri);
-        final ToggleButton sat=(ToggleButton)findViewById(R.id.Btn_sat);
-        final ToggleButton sun=(ToggleButton)findViewById(R.id.Btn_sun);
-        final ArrayList<Alram_Infor> alram_infor_list= new ArrayList<Alram_Infor>();
 
-        final Calendar m=Calendar.getInstance();
-        String dirPath = getFilesDir().getAbsolutePath();
-        final String dirfile=String.format(dirPath+"/Alram3.txt");
-        final File savefile = new File(dirPath+"/Alram3.txt");
-        File file =new File("myFile.txt");
+         pattern=new boolean[8];
+         A_time=(TimePicker)findViewById(R.id.timePicker);
+         alram_item =new ArrayList<String>();
+         adapter = new ArrayAdapter(this,android.R.layout.simple_list_item_single_choice,alram_item);
+         alram_list = (ListView)findViewById(R.id.List_alram);//알람 리스트
+         mon=(ToggleButton)findViewById(R.id.Btn_mon);
+         tue=(ToggleButton)findViewById(R.id.Btn_tue);
+         wen=(ToggleButton)findViewById(R.id.Btn_wen);
+         thu=(ToggleButton)findViewById(R.id.Btn_thu);
+         fri=(ToggleButton)findViewById(R.id.Btn_fri);
+         sat=(ToggleButton)findViewById(R.id.Btn_sat);
+         sun=(ToggleButton)findViewById(R.id.Btn_sun);
+
+        Intent service = new Intent(this, Alram_Service.class);
+        bindService(service, mServiceConnection, 0);
 
 
         /*
@@ -109,33 +166,9 @@ public class Alram extends AppCompatActivity {
         디폴트 false;
          */
         SetDay(pattern);
-        //파일 읽기
-        readAlramInfor(savefile,alram_infor_list,alram_item);
-        adapter.notifyDataSetChanged();
-        //파일 쓰기
 
-
-
-
-
-
-
-        final ListView alram_list = (ListView)findViewById(R.id.List_alram);//알람 리스트
         alram_list.setAdapter(adapter);
 
-
-        //날짜 계산
-        A_date.init(A_date.getYear(),A_date.getMonth(),A_date.getDayOfMonth(),
-                new DatePicker.OnDateChangedListener(){
-                    //값이 바뀔때 마다 바뀐 날짜의 값을 바꾸어 준다.
-                    @Override
-                    public void onDateChanged(DatePicker view, int year, int monthOfYear, int dayOfMonth) {
-                       // Toast.makeText(getApplicationContext(), String.format("%d",A_date.getDayofWeek()), Toast.LENGTH_SHORT).show();
-
-
-                    }
-                }
-        );
         //시간 계산
 
         mon.setOnClickListener(new View.OnClickListener() {
@@ -258,106 +291,41 @@ public class Alram extends AppCompatActivity {
             @Override
             public void onClick(View v) {
                 //시험용
-                if (SDK_INT >= Build.VERSION_CODES.M) {//API 버전 23이상 쩝....
-                   // Toast.makeText(getApplicationContext(), String.format("%d %d %d %d %d",A_date.getYear(),A_date.getMonth()+1,A_date.getDayOfMonth(),A_time.getHour(),A_time.getMinute()), Toast.LENGTH_LONG).show();
-                    //주마다 하는거나 매일 하는거 함수 만들기!
-                    alram_item.add(String.format("%d년 %d월 %d일 %d시 %d분",A_date.getYear(),(A_date.getMonth()+1),A_date.getDayOfMonth(),A_time.getHour(),A_time.getMinute()));
-
-                    adapter.notifyDataSetChanged();
-                    Calendar cal= Calendar.getInstance();
-
-                     cal.set(Calendar.YEAR,A_date.getYear());
-                    cal.set(Calendar.MONTH,A_date.getMonth());
-                    cal.set(Calendar.DAY_OF_MONTH,A_date.getDayOfMonth());
-                    cal.set(Calendar.HOUR_OF_DAY,A_time.getHour());
-                    cal.set(Calendar.MINUTE,A_time.getMinute());
-                    cal.set(Calendar.SECOND,0);
-                   int dayofweek= cal.get(Calendar.DAY_OF_WEEK);
-                    alram_infor_list.add(new Alram_Infor(A_date.getYear(),(A_date.getMonth()+1),A_date.getDayOfMonth(),dayofweek,A_time.getHour(),A_time.getMinute(),pattern));
-                    //
-
-
-
-
-                    BufferedWriter file_write;
-                    FileOutputStream fos;
-                    try {
-
-                        fos = openFileOutput("myFile.txt", Context.MODE_APPEND);
-                        PrintWriter out= new PrintWriter(fos);
-                  /*      FileWriter fileWriter = new FileWriter(savefile , true);
-                        file_write = new BufferedWriter(fileWriter);
-                        file_write.newLine();//한줄씩 쓰게 하기*/
-                       //년
-                        out.println("");
-                        out.print(A_date.getYear());
-                        out.print(",");
-
-                       //월
-                        out.print((A_date.getMonth()+1));
-                        out.print(",");
-                        //요일 변수
-                        out.print(dayofweek);
-                        out.print(",");
-                        //일
-                        out.print((A_date.getDayOfMonth()));
-                        out.print(",");
-                        //시
-                        out.print(A_time.getHour());
-                        out.print(",");
-                        //분
-                        out.print(A_time.getMinute());
-                        out.print(",");
-                        //
-                        if(pattern[1]==false)
-                            out.print(0);
-                        else
-                            out.print(1);
-                        out.print(",");
-                        if(pattern[2]==false)
-                            out.print(0);
-                        else
-                            out.print(1);
-                        out.print(",");
-                        if(pattern[3]==false)
-                            out.print(0);
-                        else
-                            out.print(1);
-                        out.print(",");
-                        if(pattern[4]==false)
-                            out.print(0);
-                        else
-                            out.print(1);
-                        out.print(",");
-                        if(pattern[5]==false)
-                            out.print(0);
-                        else
-                            out.print(1);
-                        out.print(",");
-                        if(pattern[6]==false)
-                            out.print(0);
-                        else
-                            out.print(1);
-                        out.print(",");
-                        if(pattern[7]==false)
-                            out.print(0);
-                        else
-                            out.print(1);
-                        out.print(",");
-
-                        out.close();
-                        fos.close();
-                       // fileWriter.close();
-
-                    }
-                    catch (Exception e)
-                    {
-
-                    }
-                    setAlram(cal);//알람 설정
+                if(alram_service == null){
+                    Toast.makeText(getApplicationContext(),"알람서비스가 없습니다.",Toast.LENGTH_SHORT).show();
+                    return;
                 }
+                Calendar calendar= Calendar.getInstance();
+                int temp_year=calendar.get(Calendar.YEAR);
+                int temp_month=calendar.get(Calendar.MONTH);
+                int temp_day=calendar.get(Calendar.DAY_OF_MONTH);
+                int temp_week=calendar.get(Calendar.DAY_OF_WEEK);
+                Random random = new Random();
+                int temp_hour=calendar.get(Calendar.HOUR_OF_DAY);
+                int temp_min=calendar.get(Calendar.MINUTE);
+
+                if(pattern[1]==false&&pattern[2]==false&&pattern[3]==false&&pattern[4]==false&&pattern[5]==false&&pattern[6]==false&&pattern[7]==false) {
+                    if (A_time.getHour() < temp_hour) {
+                        calendar.set(Calendar.DAY_OF_MONTH, temp_day + 1);
+                        temp_day++;
+                    } else if (A_time.getHour() == temp_hour && temp_min > A_time.getMinute()) {
+                        calendar.set(Calendar.DAY_OF_MONTH, temp_day + 1);
+                        temp_day++;
+                    }
+                }
+                alram_service.add_alram(new Alram_Infor(temp_year,temp_month,temp_day,temp_week,A_time.getHour(),A_time.getMinute(),pattern,random.nextInt(10^5)));
+
+                int i;
+                List<Alram_Infor> temp = alram_service.getAlram_list();
+                alram_item.clear();
+                for(i = 0 ; i < temp.size() ; i++){
+                    String s = changeItem(temp.get(i));
+                    Log.i("정보 : ", s);
+                    alram_item.add(s);
+                }
+                adapter.notifyDataSetChanged();
+
                 SetDay(pattern);
-                 size=alram_infor_list.size();
                 mon.setChecked(false);
                 thu.setChecked(false);
                 wen.setChecked(false);
@@ -365,7 +333,6 @@ public class Alram extends AppCompatActivity {
                 fri.setChecked(false);
                 sat.setChecked(false);
                 sun.setChecked(false);
-                adapter.notifyDataSetChanged();;
             }
         });
 
@@ -378,117 +345,36 @@ public class Alram extends AppCompatActivity {
 
             @Override
             public void onClick(View v) {
-                //시험용
-            int count, checked;
-            count = adapter.getCount();
-                if(count>0){
-                    checked =alram_list.getCheckedItemPosition();
-                   int temp= alram_infor_list.get(checked).putMin()+alram_infor_list.get(checked).putHour()*100+alram_infor_list.get(checked).putDay()*10000+alram_infor_list.get(checked).putMonth()*1000000;
-                    Intent intent = new Intent(Alram.this,MyReceiver.class);
-                    sender = PendingIntent.getBroadcast(Alram.this,temp,intent,0);
-                    AlarmManager am = (AlarmManager)getSystemService(Context.ALARM_SERVICE);
-                    am.cancel(sender);
-                    if(checked > -1 &&checked < count)
-                    {
-                        alram_item.remove(checked);
-                        alram_list.clearChoices();
-                        adapter.notifyDataSetChanged();;
-                        alram_infor_list.remove(checked);
-
-                        FileOutputStream fos;
-                    try {
-                        fos = openFileOutput("myFile.txt",MODE_PRIVATE);
-                        PrintWriter out= new PrintWriter(fos);
-                         size =alram_infor_list.size();
-
-                        for(int i=0;i<size;i++) {
-                            out.println("");
-                            out.print(alram_infor_list.get(i).putYear());
-                            out.print(",");
-                            //월
-                            out.print(alram_infor_list.get(i).putMonth());
-                            out.print(",");
-                            //주의 첫번째 일
-                            out.print(alram_infor_list.get(i).putOrderDay());
-                            out.print(",");
-                            //일
-                            out.print(alram_infor_list.get(i).putDay());
-                            out.print(",");
-                            //시
-                            out.print(alram_infor_list.get(i).putHour());
-                            out.print(",");
-                            //분
-                            out.print(alram_infor_list.get(i).putMin());
-                            out.print(",");
-                            //
-                            if (alram_infor_list.get(i).putPattern(1) == false)
-                                out.print(0);
-                            else
-                                out.print(1);
-                            out.print(",");
-                            if (alram_infor_list.get(i).putPattern(2) == false)
-                                out.print(0);
-                            else
-                                out.print(1);
-                            out.print(",");
-                            if (alram_infor_list.get(i).putPattern(3) == false)
-                                out.print(0);
-                            else
-                                out.print(1);
-                            out.print(",");
-                            if (alram_infor_list.get(i).putPattern(4) == false)
-                                out.print(0);
-                            else
-                                out.print(1);
-                            out.print(",");
-                            if (alram_infor_list.get(i).putPattern(5) == false)
-                                out.print(0);
-                            else
-                                out.print(1);
-                            out.print(",");
-                            if (alram_infor_list.get(i).putPattern(6) == false)
-                                out.print(0);
-                            else
-                                out.print(1);
-                            out.write(",");
-                            if (alram_infor_list.get(i).putPattern(7) == false)
-                                out.print(0);
-                            else
-                                out.print(1);
-                            out.write(",");
-
-                            // fileWriter.close();*/
-                        }
-                        out.close();
-                        fos.close();
-                    }
-                    catch (Exception e)
-                    {
-
-                    }
-
-
-
-
-
-
-
-
-                    }
+                if(alram_service == null){
+                    return;
                 }
-
-
-
+                List<Alram_Infor> temp= alram_service.getAlram_list();
+                alram_service.remove_alram(temp.get(alram_list.getCheckedItemPosition()).getId());
+                int i;
+                temp = alram_service.getAlram_list();
+                alram_item.clear();
+                for(i = 0 ; i < temp.size() ; i++){
+                    String s = changeItem(temp.get(i));
+                    Log.i("정보 : ", s);
+                    alram_item.add(s);
+                }
+                adapter.notifyDataSetChanged();
             }
         });
-
-
-
     }
-    //onCreate 끝
-    /*
-    요일을 판별해주는 것을 함수로써 만들기
-     */
+    @Override
+    public void onResume(){
+        super.onResume();
+
+        IntentFilter filter = new IntentFilter(Alram_Service.ALRAM_DONE);
+        registerReceiver(mBroadcastRecevier, filter);
+    }
+
+    @Override
+    public void onPause(){
+        super.onPause();
+        unregisterReceiver(mBroadcastRecevier);
+    }
    void SetDay(boolean[] pattern2)
    {
        for(int i=1;i<8;i++)
@@ -497,97 +383,4 @@ public class Alram extends AppCompatActivity {
        }
    }
 
-    void readAlramInfor(File temp_file,ArrayList<Alram_Infor> temp_alram_infor_list,ArrayList<String> temp_alram_item )
-    {
-        FileInputStream fis;
-        BufferedReader bufferReader;
-                // 파일 내용 읽어오기
-                try {
-                    fis = openFileInput("myFile.txt");
-                    bufferReader = new BufferedReader(new InputStreamReader(fis));
-                    String content="", temp="";
-                    while( (temp = bufferReader.readLine()) != null ) {
-                    //    content += temp;
-                        /*
-                        ,단위로 string 끊어치기기
-                         */
-                        StringTokenizer tokens= new StringTokenizer(temp);
-
-                        /**
-                         *생각해보는 반복요일 숫자인데 그거 지정해야하네....
-                         */
-                        int temp_year=0;
-                        int temp_month=0;
-                        int temp_firstDay=0;
-                        int temp_day=0;
-                        int temp_hour=0;
-                        int temp_min=0;
-                        boolean[] temp_pa= new boolean[8];
-                        if(temp.equals(""))
-                           continue;
-                        temp_year=Integer.parseInt(tokens.nextToken(","));
-                        temp_month=Integer.parseInt(tokens.nextToken(","));
-                        temp_firstDay=Integer.parseInt(tokens.nextToken(","));
-                        temp_day=Integer.parseInt(tokens.nextToken(","));
-                        temp_hour=Integer.parseInt(tokens.nextToken(","));
-                        temp_min=Integer.parseInt(tokens.nextToken(","));
-                        for(int i=1;i<=7;i++)
-                        {
-                            temp_pa[i]=decide(Integer.parseInt(tokens.nextToken(",")));
-                        }
-                        temp_alram_item.add(String.format("%d년 %d월 %d일 %d시 %d분",temp_year,temp_month,temp_day,temp_hour,temp_min));
-                        temp_alram_infor_list.add(new Alram_Infor(temp_year,temp_month,temp_day,temp_firstDay,temp_hour,temp_min,temp_pa));
-                        // 추가
-                    }
-                    fis.close();
-                    bufferReader.close();
-                    Log.v(null,""+content);
-                } catch (Exception e) {}
-
-
-
-
-    }
-    /*반복 요일 설정용
-
-     */
-    boolean decide(int what)
-    {
-        if(what==0)
-        {
-            return false;
-        }
-        else
-        {
-            return true;
-        }
-    }
-
-void setReceiver()
-{
-    IntentFilter filter = new IntentFilter();
-    filter.addAction("STATE_CHANGE_NOTIFY");
-
-  //  registerReceiver(MyReceiver,filter);
-
-
-}
-
-
-
-void setAlram(Calendar cal)
-{
-    Intent intent = new Intent(Alram.this,MyReceiver.class);
-   //엑스트라 넣어서
-    GregorianCalendar temp= new GregorianCalendar();
-    int start_time=cal.get(Calendar.MINUTE)+cal.get(Calendar.HOUR_OF_DAY)*100+cal.get(Calendar.DAY_OF_MONTH)*10000+(cal.get(Calendar.MONTH)+1)*1000000;
-    intent.putExtra("YEAR",cal.get(Calendar.YEAR));
-    intent.putExtra("MONTH",cal.get(Calendar.MONTH)+1);
-    intent.putExtra("DAY",cal.get(Calendar.DAY_OF_MONTH));
-    intent.putExtra("MIN",cal.get(Calendar.MINUTE));
-    intent.putExtra("HOUR",cal.get(Calendar.HOUR_OF_DAY));
-    PendingIntent sender = PendingIntent.getBroadcast(Alram.this,start_time,intent,0);
-    AlarmManager am = (AlarmManager)getSystemService(Context.ALARM_SERVICE);
-    am.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP,cal.getTimeInMillis(),sender);//
-}
 }

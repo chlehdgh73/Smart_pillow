@@ -11,13 +11,17 @@ import android.content.IntentFilter;
 import android.content.ServiceConnection;
 import android.media.MediaPlayer;
 import android.net.Uri;
+import android.os.Binder;
 import android.os.Build;
+import android.os.Handler;
 import android.os.IBinder;
+import android.os.SystemClock;
 import android.provider.MediaStore;
 import android.util.Log;
 import android.widget.Toast;
 
 import java.io.BufferedReader;
+import java.io.EOFException;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.InputStreamReader;
@@ -25,163 +29,216 @@ import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.GregorianCalendar;
+import java.util.List;
+import java.util.Random;
 import java.util.StringTokenizer;
 
+
 public class Alram_Service extends Service {
-    private MediaPlayer mediaPlayer;
-    private  int Id;
-    private boolean stop;
-    private BroadcastReceiver setting;
-    private int year;
-    private  int month;
-    private  int day;
-    private int hour;
-    private  int min;
-    private  long date;
-    private GregorianCalendar cal, first,second,result;
-    boolean fisrtget, secondget;
-    public int STATE;
-    public static final int STATE_INIT = 0;//초기상태
-    public static final int STATE_LAIN = 1;//누운상태
-    public static final int STATE_DEEP = 2;//완전수면상태
-    public static final int STATE_SHALLOW = 3;//뒤척임상태
-    public static final int STATE_TEMP_AWAKE = 4;//잠깐깬상태
-    public static final int STATE_RE_LAIN = 5;//다시누운상태
-    public static final int STATE_COMPLETE_AWAKE = 6;//기상상태
+    private MediaPlayer mediaPlayer=new MediaPlayer();
+    private GregorianCalendar cal, first, second, result;
+
+    public static final String ALRAM_START = "ALRAM_START";
+    public static final String ALRAM_CANCLE = "ALRAM_CANCLE";
+    public static final String ALRAM_DONE = "ALRAM_DONE";
+    private final int cancle_timer = 55555555;
+    private boolean complete_end = true;
+
+    private final IBinder mBinder = new LocalBinder();
+
     public static ArrayList<Alram_Infor> alram_infor_list;
+    private Thread alram_thread = null;
     private BLEService bluetooth_service = null;
-    public Ring ring;
+    public static PendingIntent sender= null;
+    private List<Alram_Infor> alram_list = new ArrayList<>();
 
     private final ServiceConnection mServiceConnection = new ServiceConnection() {
         @Override
         public void onServiceConnected(ComponentName componentName, IBinder service) {
             bluetooth_service = ((BLEService.LocalBinder) service).getService();
-            Log.i("정보 : ","service_connect 호출");
             // Automatically connects to the device upon successful start-up initialization.
         }
 
         @Override
         public void onServiceDisconnected(ComponentName componentName) {
             bluetooth_service = null;
-            Log.i("정보 : ","service_disconnect 호출");
         }
     };
-    public Alram_Service() {
 
-
+    public class LocalBinder extends Binder {
+        Alram_Service getService() {
+            return Alram_Service.this;
+        }
     }
-    @Override
-    public void onCreate()
-    {
-        mediaPlayer=new MediaPlayer();
-        Intent service = new Intent(this, BLEService.class);
-        //bindService(service, mServiceConnection, 0);
-        //STATE=bluetooth_service.query_state();
-        STATE=STATE_COMPLETE_AWAKE;
-        setting =new BroadcastReceiver() {
-                @Override
-            public void onReceive(Context context, Intent intent) {
-                String action=intent.getAction();
 
-                if(action.equals("STATE_CHANGE_NOTIFY"))
-                {
-                    int state=intent.getIntExtra("NOTIFY_STATE",1);
-                    STATE=state;
-                    switch(state)
-                    {
-                        case STATE_INIT:
-                            break;
-                        case STATE_LAIN://누운 상태
-                            if(fisrtget)//일어났는데 다시 누우면
-                            {
-                                first= new GregorianCalendar();
-                                fisrtget=false;
-                            }
-                            break;
-                        case STATE_DEEP://깊게 잔 상태
-                            break;
-                        case STATE_SHALLOW://
-                            break;
-                        case STATE_TEMP_AWAKE://잠깐 깬 상태
-                            break;
-                        case STATE_RE_LAIN://다시 누움
-                            if(fisrtget)//일어났는데 다시 누우면
-                            {
-                              first= new GregorianCalendar();
-                            }
+    BroadcastReceiver mBroadcastRecevier = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            String action = intent.getAction();
 
-                            break;
-                        case STATE_COMPLETE_AWAKE://완전기상
-                            if(!fisrtget) {
-                                first = new GregorianCalendar();
-                                fisrtget=true;
-                            }
-                            break;
+            if (action.equals(BLEService.STATE_CHANGE_NOTIFY)) {
+
+                if(bluetooth_service == null){
+                    if(mediaPlayer.isPlaying() == true){
+                        mediaPlayer.pause();
+                        complete_end = true;
+                    }
+                    return;
+                }
+
+                if(bluetooth_service.query_lain_state() == true){
+                    if(complete_end == false) {
+                        Intent alram = new Intent(Alram_Service.this, MyReceiver.class);
+                        PendingIntent sender = PendingIntent.getBroadcast(Alram_Service.this, cancle_timer, intent, 0);
+                        AlarmManager am = (AlarmManager) getSystemService(Context.ALARM_SERVICE);
+                        am.cancel(sender);
+                        mediaPlayer.seekTo(0);
+                        mediaPlayer.start();
                     }
                 }
+                else{
+                    Intent alram = new Intent(Alram_Service.this,MyReceiver.class);
+                    intent.putExtra("alram!","cancle_alram");
+                    PendingIntent sender = PendingIntent.getBroadcast(Alram_Service.this,cancle_timer,intent,0);
+
+                    long timer = System.currentTimeMillis() + (600*1000);
+
+                    AlarmManager am = (AlarmManager)getSystemService(Context.ALARM_SERVICE);
+                    am.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP,timer,sender);
+
+                    mediaPlayer.pause();
+                }
+
+
             }
-        };
+            else if(action.equals(ALRAM_START)){
+                int id = intent.getIntExtra("this_is_id", -1);
+                int i;
+                Alram_Infor temp = null;
+                if(id == -1){
+                    return;
+                }
+                else{
+                    for(i = 0 ; i < alram_list.size() ; i++){
+                        if(alram_list.get(i).getId() == id){
+                            temp = alram_list.get(i);
+                            break;
+                        }
+                    }
+                }
+                if(temp == null){
+                    return;
+                }
 
-    }
-    /*반복 요일 설정용
+                if(temp.get_redo() == false){
+                    alram_list.remove(temp);
+                    Intent send = new Intent(ALRAM_DONE);
+                    sendBroadcast(send);
+                }
+                else{
+                    setAlram(temp);
+                }
 
- */
-    boolean decide(int what)
-    {
-        if(what==0)
-        {
-            return false;
+
+                if(mediaPlayer.isPlaying())
+                {
+                   return;
+
+                }
+                else{
+                    complete_end = false;
+                    if(bluetooth_service == null){
+                        return;
+                    }
+
+                    if(bluetooth_service.query_lain_state() == true) {
+                        mediaPlayer.seekTo(0);
+                        mediaPlayer.start();
+                    }
+
+                }
+            }
+            else if(action.equals(ALRAM_CANCLE)){
+                mediaPlayer.pause();
+                complete_end = true;
+            }
         }
-        else
+    };
+
+    @Override
+    public void onCreate() {
+        Log.i("정보 : ", "알람서비스가 생성되었음");
+        read_infor();
+
+        Intent service = new Intent(this, BLEService.class);
+        bindService(service, mServiceConnection, 0);
+
+        setReceiver();
+
+        int size=alram_list.size();
+        for(int i=0;i<size;i++)
         {
-            return true;
+            setAlram(alram_list.get(i));
         }
+
+        try {
+
+            mediaPlayer=MediaPlayer.create(getApplicationContext(),R.raw.wakeup);
+            mediaPlayer.setLooping(true);
+        }
+        catch (Exception e){ }
+
     }
 
     @Override
-    public int onStartCommand(Intent intent, int flags, int startId)
+    public int onStartCommand(Intent intent, int flags, int startId) {
+
+        return super.onStartCommand(intent,flags,startId);
+    }
+
+    @Override
+    public void onDestroy(){
+        super.onDestroy();
+        unregisterReceiver(mBroadcastRecevier);
+    }
+
+    @Override
+    public IBinder onBind(Intent intent) {
+        // TODO: Return the communication channel to the service.
+        return mBinder;
+
+    }
+
+    void setReceiver() {
+        IntentFilter filter1 = new IntentFilter(BLEService.STATE_CHANGE_NOTIFY);
+        IntentFilter filter2 = new IntentFilter(ALRAM_START);
+        IntentFilter filter3 = new IntentFilter(ALRAM_CANCLE);
+        registerReceiver(mBroadcastRecevier, filter1);
+        registerReceiver(mBroadcastRecevier, filter2);
+        registerReceiver(mBroadcastRecevier, filter3);
+    }
+
+    public void read_infor()
     {
-        fisrtget=false;
-        // secondget=false;
-        stop=false;
-        alram_infor_list= new ArrayList<Alram_Infor>();
-
-        setReceiver();
-        stop=false;
-        fisrtget=false;
-        ring=new Ring();
-        first=new GregorianCalendar();
-        cal= new GregorianCalendar();
-         year = intent.getIntExtra("YEAR",1);         // 연도를 리턴
-         month = intent.getIntExtra("MONTH",1);    // 월을 리턴
-         day = intent.getIntExtra("DAY",1);          // 일을 리턴
-         hour = intent.getIntExtra("HOUR",1);         // 시를 리턴
-         min = intent.getIntExtra("MIN",1);       // 분을 리턴
-        int line=0;
-        boolean correct=false;
-
-
         FileInputStream fis;
         BufferedReader bufferReader;
+        // 파일 내용 읽어오기
         try {
             fis = openFileInput("myFile.txt");
             bufferReader = new BufferedReader(new InputStreamReader(fis));
             String content="", temp="";
-                while( (temp = bufferReader.readLine()) != null ) {
-                    StringTokenizer tokens = new StringTokenizer(temp);
-                    //
-                    //   Id = Integer.parseInt(tokens.nextToken(","));
-              int temp_year=0;
+            while( (temp = bufferReader.readLine()) != null ) {//파일 끝까지 모든 정보 읽어서 리스트에 저장
+                StringTokenizer tokens= new StringTokenizer(temp);
+                int temp_year=0;
                 int temp_month=0;
                 int temp_firstDay=0;
                 int temp_day=0;
                 int temp_hour=0;
                 int temp_min=0;
+                int temp_id=0;
                 boolean[] temp_pa= new boolean[8];
                 if(temp.equals(""))
                     continue;
-                if(!correct)
-                 line++;//어우 줄세기???
                 temp_year=Integer.parseInt(tokens.nextToken(","));
                 temp_month=Integer.parseInt(tokens.nextToken(","));
                 temp_firstDay=Integer.parseInt(tokens.nextToken(","));
@@ -192,268 +249,375 @@ public class Alram_Service extends Service {
                 {
                     temp_pa[i]=decide(Integer.parseInt(tokens.nextToken(",")));
                 }
-                alram_infor_list.add(new Alram_Infor(temp_year,temp_month,temp_day,temp_firstDay,temp_hour,temp_min,temp_pa));
-                if(temp_year==year)
-                {
-                    if(temp_month==month)
-                    {
-                        if(temp_day==day)
-                        {
-                            if(temp_hour==hour)
-                            {
-                                if(temp_min==min)
-                                {
-                                    correct=true;
-                                    break; //같은거
-                                }
-                            }
+                temp_id=Integer.parseInt(tokens.nextToken(","));
+                alram_list.add(new Alram_Infor(temp_year,temp_month,temp_day,temp_firstDay,temp_hour,temp_min,temp_pa,temp_id));
+            }
+            fis.close();
+            bufferReader.close();
+        } catch (Exception e) {}
+    }
+
+    public boolean decide(int count)
+    {
+        if(count==0)
+        {
+            return false;
+        }
+
+            return true;
+    }
+
+    private Alram_Infor check_same(Alram_Infor item)
+    {
+        int size=alram_list.size();
+
+        for(int i=0; i<size;i++)
+        {
+            if(alram_list.get(i).getYear()!=item.getYear())//년
+            {
+                continue;
+            }
+             if(alram_list.get(i).getMonth()!=item.getMonth())//월
+            {
+                continue;
+            }
+             if(alram_list.get(i).getDay()!=item.getDay())//일
+            {
+                continue;
+            }
+             if(alram_list.get(i).getHour()!=item.getHour())//시간
+            {
+                continue;
+            }
+             if(alram_list.get(i).getMin()!=item.getMin())//분
+            {
+                continue;
+            }
+            return alram_list.get(i);
+        }
+
+        return null;
+    }
+
+    public int check_id(int id)
+    {
+        int size=alram_list.size();
+        for(int i=0;i<size;i++)
+        {
+            if(alram_list.get(i).getId()==id)
+            {
+                return i;
+            }
+        }
+        return -1;
+    }
+    public void modify(Alram_Infor item, Alram_Infor target)
+    {
+        if(target.get_redo() == false) {
+            return;
+        }
+
+        for(int i=1;i<8;i++)
+        {
+            if (target.getPattern(i) == false && item.getPattern(i) == true) {
+                target.setdaypattern(i);
+            }
+        }
+        releaseAlram(target);
+        setAlram(target);
+        write_list(alram_list);
+    }
+
+    public void add_alram(Alram_Infor item)
+    {
+      Alram_Infor checked = check_same(item);
+      if(checked == null)//같은게 없을경우 추가
+      {
+          while(true)//id  식별
+          {
+              if(check_id(item.getId())==-1)
+              {
+                  break;
+              }
+              else
+              {
+                  Random random = new Random();
+                  item.setId(random.nextInt(10^5));
+              }
+          }
+          alram_list.add(item);
+          add_item(item);
+          setAlram(item);
+      }
+      else
+      {
+          modify(item,checked);
+      }
+    }
+
+    public void setAlram(Alram_Infor item)
+    {
+        Calendar today=Calendar.getInstance();
+        long time_long;
+
+        int today_temp=today.get(Calendar.DAY_OF_WEEK);
+        int today_hour = today.get(Calendar.HOUR_OF_DAY);
+        int today_min = today.get(Calendar.MINUTE);
+        if(item.get_redo())
+        {
+            int i;
+            int diff = 0;
+            boolean is_same = false;
+            for(i=today_temp; i < 8; i++){
+                if(item.getPattern(i) == true){
+                    is_same = true;
+                    break;
+                }
+                else{
+                    diff++;
+                }
+            }
+
+            if(diff == 0){
+                if(today_hour > item.getHour() || (today_hour == item.getHour() && today_min >= item.getMin())){
+                    i++;
+                    is_same = false;
+                    for(; i < 8; i++){
+                        if(item.getPattern(i) == true){
+                            is_same = true;
+                            break;
+                        }
+                        else{
+                            diff++;
                         }
                     }
                 }
-            }//end while
-            fis.close();
-            bufferReader.close();
-        }
-        catch (Exception e)
-        {
-        }//읽기 끝
+            }
 
-
-        try {//알람 노래
-            fis = openFileInput("Alram_infor.txt");
-            bufferReader = new BufferedReader(new InputStreamReader(fis));
-            String content="", temp="";
-            while( (temp = bufferReader.readLine()) != null ) {
-                StringTokenizer tokens = new StringTokenizer(temp);
-                //
-                   Id = Integer.parseInt(tokens.nextToken(","));
-            }//end while
-            fis.close();
-            bufferReader.close();
-        }
-        catch (Exception e)
-        {
-        }//읽기 끝
-
-
-
-        //덮어 쓰면 되겠따
-        int today=alram_infor_list.get(line-1).putOrderDay();
-        for(int i=1;i<=7;i++)
-        {
-            int temp_day=today+i;
-            if(temp_day>7)
-                temp_day=temp_day-7;
-            if(alram_infor_list.get(line-1).putPattern(temp_day))
-            {
-                int plus = (temp_day-alram_infor_list.get(line-1).putOrderDay());
-                if(plus<=0)
-                {
-                    plus=7+plus;
+            if(is_same == false){
+                for(i=1; i < 8; i++){
+                    if(item.getPattern(i) == true){
+                        is_same = true;
+                        break;
+                    }
+                    else{
+                        diff++;
+                    }
                 }
-                result= new GregorianCalendar();
-               // alram_infor_list.get(line-1).getDay(alram_infor_list.get(line-1).putDay()+plus);
-                Calendar temp=Calendar.getInstance();
-                temp.set(Calendar.YEAR,alram_infor_list.get(line-1).putYear());
-                temp.set(Calendar.MONTH,alram_infor_list.get(line-1).putMonth()-1);
-                temp.set(Calendar.DAY_OF_MONTH,alram_infor_list.get(line-1).putDay());
-                temp.set(Calendar.HOUR_OF_DAY,alram_infor_list.get(line-1).putHour());
-                temp.set(Calendar.MINUTE,alram_infor_list.get(line-1).putMin());
-                temp.set(Calendar.SECOND,0);
-                temp.set(Calendar.DAY_OF_MONTH,temp.get(Calendar.DAY_OF_MONTH)+plus);
-                alram_infor_list.get(line-1).getMonth(temp.get(Calendar.MONTH)+1);
-                alram_infor_list.get(line-1).getDay(temp.get(Calendar.DAY_OF_MONTH));
-                alram_infor_list.get(line-1).getDayOrder(temp_day);
-
-                break;
-
-               //반복요일 정해서 결정해서 만약 없으면 삭제하고 있으면 수정해서 다시 써야함 퍽...
             }
-        }
-        boolean only=true;
-        for(int i=1;i<8;i++)
-        {
-            if(alram_infor_list.get(line-1).putPattern(i))
-            {
-                only=false;
+
+            if(is_same == true){
+                today.set(Calendar.DAY_OF_MONTH,today.get(Calendar.DAY_OF_MONTH)+diff);
+                today.set(Calendar.HOUR_OF_DAY,item.getHour());
+                today.set(Calendar.MINUTE,item.getMin());
             }
+            time_long = today.getTimeInMillis();
+            Log.i("정보 : ", today.toString());
         }
-        if(only)
+        else //반복요일 아닌 경우
         {
-            alram_infor_list.remove(line-1);
+            Calendar time_to_day= Calendar.getInstance();
+            time_to_day.set(Calendar.YEAR,item.getYear());
+            time_to_day.set(Calendar.MONTH,item.getMonth());
+            time_to_day.set(Calendar.DAY_OF_MONTH,item.getDay());
+            time_to_day.set(Calendar.HOUR,item.getHour());
+            time_to_day.set(Calendar.MINUTE,item.getMin());
+            time_to_day.set(Calendar.SECOND,0);
+
+            if((today.getTimeInMillis() - time_to_day.getTimeInMillis()) > 0 ){
+                alram_list.remove(item);
+                return;
+            }
+
+            time_long = time_to_day.getTimeInMillis();
+            Log.i("정보 : ", time_to_day.toString());
+
         }
-        //파일 쓰기
 
+        Intent intent = new Intent(Alram_Service.this,MyReceiver.class);
+        intent.putExtra("alram!","start_alram");
+        intent.putExtra("this_is_id", item.getId());
+        PendingIntent sender = PendingIntent.getBroadcast(Alram_Service.this,item.getId(),intent,0);
 
-        FileOutputStream fos;
+        AlarmManager am = (AlarmManager)getSystemService(Context.ALARM_SERVICE);
+        am.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP,time_long,sender);//
+
+    }
+
+    public void releaseAlram(Alram_Infor item)
+    {
+      Intent intent = new Intent(Alram_Service.this,MyReceiver.class);
+      PendingIntent sender = PendingIntent.getBroadcast(Alram_Service.this,item.getId(),intent,0);
+      AlarmManager am = (AlarmManager)getSystemService(Context.ALARM_SERVICE);
+      am.cancel(sender);
+    }
+
+    public void write_list(List<Alram_Infor> list)
+    {
         try {
-            fos = openFileOutput("myFile.txt",MODE_PRIVATE);
-            PrintWriter out= new PrintWriter(fos);
-           int size =alram_infor_list.size();
-            for(int i=0;i<size;i++) {
+            FileOutputStream fos;
+            fos = openFileOutput("myFile.txt", MODE_PRIVATE);
+            PrintWriter out = new PrintWriter(fos);
+            for (int i = 0; i < list.size(); i++) {
                 out.println("");
-                out.print(alram_infor_list.get(i).putYear());
+                //년
+                out.print(list.get(i).getYear());
                 out.print(",");
                 //월
-                out.print(alram_infor_list.get(i).putMonth());
+                out.print(list.get(i).getMonth());
                 out.print(",");
-                //주의 첫번째 일
-                out.print(alram_infor_list.get(i).putOrderDay());
+                //요일
+                out.print(list.get(i).getOrderDay());
                 out.print(",");
                 //일
-                out.print(alram_infor_list.get(i).putDay());
+                out.print(list.get(i).getDay());
                 out.print(",");
                 //시
-                out.print(alram_infor_list.get(i).putHour());
+                out.print(list.get(i).getHour());
                 out.print(",");
                 //분
-                out.print(alram_infor_list.get(i).putMin());
+                out.print(list.get(i).getMin());
                 out.print(",");
                 //
-                if (alram_infor_list.get(i).putPattern(1) == false)
+                if (!list.get(i).getPattern(1))
                     out.print(0);
                 else
                     out.print(1);
                 out.print(",");
-                if (alram_infor_list.get(i).putPattern(2) == false)
+                if (!list.get(i).getPattern(2))
                     out.print(0);
                 else
                     out.print(1);
                 out.print(",");
-                if (alram_infor_list.get(i).putPattern(3) == false)
+                if (!list.get(i).getPattern(3))
                     out.print(0);
                 else
                     out.print(1);
                 out.print(",");
-                if (alram_infor_list.get(i).putPattern(4) == false)
+                if (!list.get(i).getPattern(4))
                     out.print(0);
                 else
                     out.print(1);
                 out.print(",");
-                if (alram_infor_list.get(i).putPattern(5) == false)
+                if (!list.get(i).getPattern(5))
                     out.print(0);
                 else
                     out.print(1);
                 out.print(",");
-                if (alram_infor_list.get(i).putPattern(6) == false)
+                if (!list.get(i).getPattern(6))
                     out.print(0);
                 else
                     out.print(1);
                 out.write(",");
-                if (alram_infor_list.get(i).putPattern(7) == false)
+                if (!list.get(i).getPattern(7))
                     out.print(0);
                 else
                     out.print(1);
+                out.write(",");
+                out.print(list.get(i).getId());
                 out.write(",");
 
-                // fileWriter.close();*/
+
             }
+
             out.close();
             fos.close();
         }
-        catch (Exception e)
-        {
+        catch (Exception e){
 
         }
-//파일에 덮어쓰기 끝
-        //새로운거 다시
-        Intent intent2 = new Intent(Alram_Service.this,MyReceiver.class);
-        //엑스트라 넣어서
-        if(!only) {
-            int start_time = alram_infor_list.get(line - 1).putMin() + alram_infor_list.get(line - 1).putHour() * 100 + alram_infor_list.get(line - 1).putDay() * 10000 + alram_infor_list.get(line - 1).putMonth() * 1000000;
-            Calendar newStart = Calendar.getInstance();
-            newStart.set(Calendar.YEAR, alram_infor_list.get(line - 1).putYear());
-            newStart.set(Calendar.MONTH, alram_infor_list.get(line - 1).putMonth());
-            newStart.set(Calendar.DAY_OF_MONTH, alram_infor_list.get(line - 1).putDay());
-            newStart.set(Calendar.HOUR_OF_DAY, alram_infor_list.get(line - 1).putHour());
-            newStart.set(Calendar.MINUTE, alram_infor_list.get(line - 1).putMin());
-            PendingIntent sender = PendingIntent.getBroadcast(Alram_Service.this, start_time, intent2, 0);
-            AlarmManager am = (AlarmManager) getSystemService(Context.ALARM_SERVICE);
-            am.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, newStart.getTimeInMillis(), sender);//
-        }
-
-
-
-
-
-
-
-
-
-
-        //
-        if(mediaPlayer!=null&&mediaPlayer.isPlaying())
-        {
-            mediaPlayer.pause();
-        }
-        if(STATE==STATE_COMPLETE_AWAKE) {
-
-
-            try {
-                Uri musicURI = Uri.withAppendedPath(MediaStore.Audio.Media.EXTERNAL_CONTENT_URI, "" + Id);
-                mediaPlayer.reset();
-                mediaPlayer.setDataSource(this, musicURI);
-                mediaPlayer.prepare();
-                mediaPlayer.start();
-                ring.start();
-            } catch (Exception e) {
-                Log.e("SimplePlayer", e.getMessage());
-            }
-            // 무한 반복재생
-            mediaPlayer.setOnCompletionListener(new MediaPlayer.OnCompletionListener() {
-                @Override
-                public void onCompletion(MediaPlayer mp) {
-                    mediaPlayer.start();
-                }
-            });
-
-        }
-
-        return START_STICKY;
-    }
-    @Override
-    public IBinder onBind(Intent intent) {
-        // TODO: Return the communication channel to the service.
-        throw new UnsupportedOperationException("Not yet implemented");
 
     }
 
-    void setReceiver()
+    public void add_item(Alram_Infor item)
     {
-        IntentFilter filter =new IntentFilter();
-        filter.addAction("STATE_CHANGE_NOTIFY");
-        registerReceiver(setting,filter);
+      FileOutputStream fos;
+      try {
+          fos = openFileOutput("myFile.txt",MODE_APPEND);
+          PrintWriter out= new PrintWriter(fos);
+              out.println("");
+          //년
+              out.print(item.getYear());
+              out.print(",");
+              //월
+              out.print(item.getMonth());
+              out.print(",");
+              //요일
+              out.print(item.getOrderDay());
+              out.print(",");
+              //일
+              out.print(item.getDay());
+              out.print(",");
+              //시
+              out.print(item.getHour());
+              out.print(",");
+              //분
+              out.print(item.getMin());
+              out.print(",");
+              //
+              if (!item.getPattern(1))
+                  out.print(0);
+              else
+                  out.print(1);
+              out.print(",");
+              if (!item.getPattern(2))
+                  out.print(0);
+              else
+                  out.print(1);
+              out.print(",");
+              if (!item.getPattern(3))
+                  out.print(0);
+              else
+                  out.print(1);
+              out.print(",");
+              if (!item.getPattern(4))
+                  out.print(0);
+              else
+                  out.print(1);
+              out.print(",");
+              if (!item.getPattern(5))
+                  out.print(0);
+              else
+                  out.print(1);
+              out.print(",");
+              if (!item.getPattern(6))
+                  out.print(0);
+              else
+                  out.print(1);
+              out.write(",");
+              if (!item.getPattern(7))
+                  out.print(0);
+              else
+                  out.print(1);
+              out.write(",");
+          out.print(item.getId());
+          out.write(",");
+          out.close();
+          fos.close();
+      }
+      catch (Exception e)
+      {
+
+      }
     }
-  class Ring extends Thread
-  {
-      @Override
-      public void run() {
-          while(true){
-              try {
-                    if(stop)
-                    {
-                        mediaPlayer.pause();
-                       // stopSelf();
-                        onDestroy();
-                        break;
-                    }
-                            if(STATE==STATE_COMPLETE_AWAKE) {
-                                second = new GregorianCalendar();
-                               // if ((second.get(Calendar.MINUTE) - first.get(Calendar.MINUTE) >= 0) && (second.get(Calendar.SECOND) - first.get(Calendar.SECOND) >= 10))//10분차
-                                {
-                                    stop = true;
-                                }
-                            }
-                  Thread.sleep(1000);
-              } catch (InterruptedException e) {
-                  e.printStackTrace();
-              }
 
-          } // end while
-      } // end run()
+    public void remove_alram(int id)
+    {
+      int size=alram_list.size();
 
-  }
-
+      for(int i=0;i<size;i++)
+      {
+          if(alram_list.get(i).getId()==id)
+          {
+              releaseAlram(alram_list.get(i));
+              alram_list.remove(i);
+              write_list(alram_list);
+          }
+      }
+    }
+    List<Alram_Infor> getAlram_list(){//읽기  전용
+      return alram_list;
+    }
 
 
 

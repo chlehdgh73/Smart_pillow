@@ -15,89 +15,115 @@ public class Alram_Infor {
     private int day;
     private int hour;//0~23
     private int min;//
-
+    private int id;
     private int week_order_day;//월화수목금
-    private  boolean [] dayofset;
+
     private boolean pattern[] =new boolean [8];
-    private String clock;
+    private boolean redo;
 
 
-        Alram_Infor(int year, int month, int day, int week_first_day, int hour, int min, boolean pattern [])
+        Alram_Infor(int year, int month, int day, int week_first_day, int hour, int min, boolean pattern [], int id)
        {
            for(int i=1;i<8;i++)
            {
                this.pattern[i]=false;
            }
-           getYear(year);
-           getMonth(month);
-           getDay(day);
-           getDayOrder(week_first_day);
-           getHour(hour);
-           getMin(min);
-           getPattern(pattern);
+           setYear(year);
+           setMonth(month);
+           setDay(day);
+           setDayOrder(week_first_day);
+           setHour(hour);
+           setMin(min);
+           setPattern(pattern);
+           setId(id);
+           setredo(pattern);
        }
+     void setredo(boolean [] pattern) {
+         redo = false;
+         for (int i = 1; i < 8; i++) {
+             if (pattern[i]) {
+                 redo = true;
+             }
+         }
+     }
+    boolean get_redo()
+    {
+        return redo;
+    }
 
-    void getYear(int year)
+
+
+
+
+
+    void setId(int id){this.id=id;}
+    void setYear(int year)
     {
         this.year=year;
     }
-    void getMonth(int month)
+    void setMonth(int month)
     {
         this.month=month;
 
     }
-    void getDay(int day)
+    void setDay(int day)
     {
         this.day=day;
     }
-    void getHour(int hour)
+    void setHour(int hour)
     {
         this.hour=hour;
     }
-    void getMin(int min)
+    void setMin(int min)
     {
         this.min=min;
     }
-    void getDayOrder(int week_first_day)
+    void setDayOrder(int week_first_day)
     {
         this.week_order_day=week_first_day;;
     }//1=일요일 , 7은 토요일
+    int getId()
+    {
+        return this.id;
+    }
 
-
-
-
-    int putYear()
+    int getYear()
     {
         return this.year;
     }
-    int putMonth()
+    int getMonth()
     {
         return this.month;
     }
-    int putDay()
+    int getDay()
     {
         return this.day;
     }
-    int putMin()
+    int getMin()
     {
         return this.min;
     }
-    int putHour()
+    int getHour()
     {
         return this.hour;
     }
-    int putOrderDay()
+    int getOrderDay()
     {
         return this.week_order_day;
     }
-    void getPattern(boolean pattern[])
+    void setPattern(boolean pattern[])
     {
         for(int i=1;i<8;i++)
         this.pattern[i]=pattern[i];
 
     }
+    void setdaypattern(int i)
+    {
+        this.pattern[i]=true;
+    }
 
-    boolean  putPattern(int a)
+
+    boolean  getPattern(int a)
     {
         return this.pattern[a];
     }

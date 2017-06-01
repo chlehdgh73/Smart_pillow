@@ -3,8 +3,10 @@ package com.example.chleh.smart_pillow4;
 import android.app.Activity;
 import android.content.ContentResolver;
 import android.content.Context;
+import android.content.res.Resources;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.graphics.drawable.BitmapDrawable;
 import android.net.Uri;
 import android.os.ParcelFileDescriptor;
 import android.util.Log;
@@ -12,6 +14,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.BaseAdapter;
+import android.widget.CheckBox;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
@@ -26,7 +29,7 @@ public class MyAdapter extends BaseAdapter {
     List<MusicDto> list;
     LayoutInflater inflater;
     Activity activity;
-
+    private boolean[] isCheckedConfirm;
     public MyAdapter() {
     }
 
@@ -34,11 +37,9 @@ public class MyAdapter extends BaseAdapter {
         this.list = list;
         this.activity = activity;
         inflater = (LayoutInflater) activity.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
+        isCheckedConfirm= new boolean[list.size()];
     }
-    public MyAdapter(Activity activity, int type, List<MusicDto> list)
-    {
 
-    }
 
     @Override
     public int getCount() {
@@ -47,13 +48,16 @@ public class MyAdapter extends BaseAdapter {
 
     @Override
     public Object getItem(int position) {
-        return position;
+        return list.get(position);
     }
 
     @Override
     public long getItemId(int position) {
         return position;
     }
+
+
+
 
     @Override
     public View getView(final int position, View convertView, ViewGroup parent) {
@@ -62,16 +66,21 @@ public class MyAdapter extends BaseAdapter {
             LinearLayout.LayoutParams layoutParams = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT);
             convertView.setLayoutParams(layoutParams);
         }
-
         ImageView imageView = (ImageView) convertView.findViewById(R.id.album);
         Bitmap albumImage = getAlbumImage(activity, Integer.parseInt((list.get(position)).getAlbumId()), 170);
         imageView.setImageBitmap(albumImage);
-
+        MusicDto musicDto = list.get(position);
         TextView title = (TextView) convertView.findViewById(R.id.title);
         title.setText(list.get(position).getTitle());
-
         TextView artist = (TextView) convertView.findViewById(R.id.artist);
         artist.setText(list.get(position).getArtist());
+        CheckBox box=(CheckBox)convertView.findViewById(R.id.checkBox);
+        box.setClickable(false);
+        box.setFocusable(false);
+        box.setChecked(isCheckedConfirm[position]);
+
+
+
 
         return convertView;
     }
@@ -133,7 +142,10 @@ public class MyAdapter extends BaseAdapter {
                 }
             }
         }
-        return null;
+        Bitmap tmp = BitmapFactory.decodeResource(context.getResources(),R.drawable.play);
+        Bitmap re = Bitmap.createScaledBitmap(tmp,MAX_IMAGE_SIZE,MAX_IMAGE_SIZE,true);
+
+        return re;
     }
 
 }

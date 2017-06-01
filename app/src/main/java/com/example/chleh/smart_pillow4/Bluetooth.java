@@ -59,10 +59,7 @@ public class Bluetooth extends AppCompatActivity {
         device_adapter = new ArrayAdapter<>(this,android.R.layout.simple_list_item_1);
         listview.setAdapter(device_adapter);
 
-        check();
-
         Intent service = new Intent(this, BLEService.class);
-        startService(service);
 
         bindService(service, mServiceConnection, 0);
 
@@ -191,71 +188,6 @@ public class Bluetooth extends AppCompatActivity {
             return bluetooth_service.reScan_device();
         }
         return false;
-    }
-
-    public void check(){
-        //gps기능(위치기능)켜져있는지 확인
-        LocationManager locate = (LocationManager)getSystemService(LOCATION_SERVICE);
-        if(!locate.isProviderEnabled(LocationManager.GPS_PROVIDER)){
-            alert_on_gps();
-        }
-
-        int permission_fine = ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION);
-        int permission_coarse = ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION);
-
-        if(permission_fine != PackageManager.PERMISSION_GRANTED || permission_coarse != PackageManager.PERMISSION_GRANTED) {
-            requestPermissions(new String[]{Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION}, 100);
-        }
-    }
-
-    private void alert_on_gps(){
-        AlertDialog.Builder builder = new AlertDialog.Builder(context);
-        builder
-                .setTitle("알림.")
-                .setMessage("블루투스4.0을 사용하기 위한 GPS기능이 켜져있지 않습니다.\nGPS기능을 켜주세요.")
-                .setCancelable(false)
-                .setPositiveButton("켜기",new DialogInterface.OnClickListener(){
-                    public void onClick(DialogInterface dialog, int button){
-                        Intent gps_intent= new Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS);
-                        startActivity(gps_intent);
-                    }
-                })
-                .setNegativeButton("취소",new DialogInterface.OnClickListener(){
-                    public void onClick(DialogInterface dialog, int button){
-                        dialog.cancel();
-                    }
-                });
-        AlertDialog dialog = builder.create();
-        dialog.show();
-    }
-
-
-    @Override
-    public void onRequestPermissionsResult(int requestCode, String[] Permission, int[] grantResults){
-        switch (requestCode){
-            case 100:
-                if(grantResults[0] != PackageManager.PERMISSION_GRANTED || grantResults[1] != PackageManager.PERMISSION_GRANTED){
-                    AlertDialog.Builder builder = new AlertDialog.Builder(context);
-                    builder
-                            .setTitle("알림.")
-                            .setMessage("블루투스4.0을 사용하기 위한 위치권한을 얻지 못했습니다.\n설정->앱 에서 위치권한을 켜주세요.")
-                            .setCancelable(true)
-                            .setPositiveButton("설정하기",new DialogInterface.OnClickListener(){
-                                public void onClick(DialogInterface dialog, int button){
-                                    Intent app_intent= new Intent(Settings.ACTION_MANAGE_APPLICATIONS_SETTINGS);
-                                    startActivity(app_intent);
-                                }
-                            })
-                            .setNegativeButton("취소",new DialogInterface.OnClickListener(){
-                                public void onClick(DialogInterface dialog, int button){
-                                    dialog.cancel();
-                                }
-                            });
-                    AlertDialog dialog = builder.create();
-                    dialog.show();
-                }
-                break;
-        }
     }
 
     BroadcastReceiver mReceiver = new BroadcastReceiver() {

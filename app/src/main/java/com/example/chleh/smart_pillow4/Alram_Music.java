@@ -33,16 +33,16 @@ public class Alram_Music extends AppCompatActivity {
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         getMusicList(); // 디바이스 안에 있는 mp3 파일 리스트를 조회하여 LIst를 만듭니다.
         listView = (ListView)findViewById(R.id.listview);
-        MyAdapter adapter = new MyAdapter(this,list);
+        MyAdapter2 adapter = new MyAdapter2(this,list);
         listView.setAdapter(adapter);
 
 
-        listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
-            @Override
-            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-                BufferedWriter file_write;
-                FileOutputStream fos;
-                try
+                listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+                    @Override
+                    public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+                        BufferedWriter file_write;
+                        FileOutputStream fos;
+                        try
                 {
                     fos = openFileOutput("Alram_infor.txt", Context.MODE_PRIVATE);
                     PrintWriter out= new PrintWriter(fos);
@@ -65,7 +65,6 @@ public class Alram_Music extends AppCompatActivity {
         });
 
     }
-
     public  void getMusicList(){
         list = new ArrayList<>();
         //가져오고 싶은 컬럼 명을 나열합니다. 음악의 아이디, 앰블럼 아이디, 제목, 아스티스트 정보를 가져옵니다.

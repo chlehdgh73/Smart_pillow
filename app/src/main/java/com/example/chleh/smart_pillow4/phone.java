@@ -23,8 +23,6 @@ public class phone extends AppCompatActivity {
         setContentView(R.layout.activity_phone);
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
-
-
         Button button5 =(Button)findViewById(R.id.alram);//음악 리스트 만들어서 다시...
         button5.setOnClickListener (new View.OnClickListener() {
             @Override

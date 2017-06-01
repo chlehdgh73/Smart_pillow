@@ -3,6 +3,7 @@ package com.example.chleh.smart_pillow4;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
+import android.util.Log;
 import android.widget.Toast;
 
 import java.io.BufferedReader;
@@ -15,16 +16,23 @@ public class MyReceiver extends BroadcastReceiver {
     @Override
 
     public void onReceive(Context context, Intent intent) {
-        // TODO: This method is called when the BroadcastReceiver is receiving
-        // an Intent broadcast.
-            Intent intent1 =new Intent(context,Alram_Service.class);
-        intent1.putExtra("YEAR",intent.getIntExtra("YEAR",1));
-        intent1.putExtra("MONTH",intent.getIntExtra("MONTH",1));
-        intent1.putExtra("DAY",intent.getIntExtra("DAY",1));
-        intent1.putExtra("MIN",intent.getIntExtra("MIN",1));
-        intent1.putExtra("HOUR",intent.getIntExtra("HOUR",1));
-            context.startService(intent1);
+        String action = intent.getStringExtra("alram!");
+        int id = intent.getIntExtra("this_is_id", -1);
 
+        Log.i("정보 : ", "action = " + action);
 
+        if(action == null){
+            return;
+        }
+
+        if(action.equals("start_alram")) {
+            Intent call = new Intent(Alram_Service.ALRAM_START);
+            call.putExtra("this_is_id", id);
+            context.sendBroadcast(call);
+        }
+        else if(action.equals("cancle_alram")){
+            Intent call = new Intent(Alram_Service.ALRAM_CANCLE);
+            context.sendBroadcast(call);
+        }
     }
 }

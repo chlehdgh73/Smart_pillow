@@ -15,4 +15,5 @@
     <string name="button_scan">Scanfor devices</string>
     <string name="title_activity_alram__music">Alram_Music</string>
     <string name="title_activity_music_folder">MusicFolder</string>
+    <string name="title_activity_music_play">MusicPlay</string>
 </resources>

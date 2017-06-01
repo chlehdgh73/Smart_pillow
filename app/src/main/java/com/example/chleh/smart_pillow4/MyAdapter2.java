@@ -3,10 +3,8 @@ package com.example.chleh.smart_pillow4;
 import android.app.Activity;
 import android.content.ContentResolver;
 import android.content.Context;
-import android.content.res.Resources;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
-import android.graphics.drawable.BitmapDrawable;
 import android.net.Uri;
 import android.os.ParcelFileDescriptor;
 import android.util.Log;
@@ -14,7 +12,6 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.BaseAdapter;
-import android.widget.CheckBox;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
@@ -24,16 +21,16 @@ import java.io.IOException;
 import java.util.List;
 
 
-public class MyAdapter extends BaseAdapter {
+public class MyAdapter2 extends BaseAdapter {
 
     List<MusicDto> list;
     LayoutInflater inflater;
     Activity activity;
 
-    public MyAdapter() {
+    public MyAdapter2() {
     }
 
-    public MyAdapter(Activity activity, List<MusicDto> list) {
+    public MyAdapter2(Activity activity, List<MusicDto> list) {
         this.list = list;
         this.activity = activity;
         inflater = (LayoutInflater) activity.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
@@ -61,30 +58,22 @@ public class MyAdapter extends BaseAdapter {
     @Override
     public View getView(final int position, View convertView, ViewGroup parent) {
         if (convertView == null) {
-                convertView = inflater.inflate(R.layout.listview_item, parent, false);
+                convertView = inflater.inflate(R.layout.listview_item2, parent, false);
             LinearLayout.LayoutParams layoutParams = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT);
             convertView.setLayoutParams(layoutParams);
         }
 
 
         ImageView imageView = (ImageView) convertView.findViewById(R.id.album);
-
         Bitmap albumImage = getAlbumImage(activity, Integer.parseInt((list.get(position)).getAlbumId()), 170);
 
         imageView.setImageBitmap(albumImage);
-
-
-
 
         TextView title = (TextView) convertView.findViewById(R.id.title);
         title.setText(list.get(position).getTitle());
 
         TextView artist = (TextView) convertView.findViewById(R.id.artist);
         artist.setText(list.get(position).getArtist());
-
-
-
-
 
         return convertView;
     }

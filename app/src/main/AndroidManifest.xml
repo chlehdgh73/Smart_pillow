@@ -7,7 +7,12 @@
     <uses-permission android:name="android.permission.BLUETOOTH_ADMIN" />
     <uses-permission android:name="android.permission.BLUETOOTH" />
     <uses-permission android:name="android.permission.READ_USER_DICTIONARY" />
-    <uses-permission android:name="android.permission.RECEIVE_SMS" />
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION"/>
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION"/>
+    <uses-permission android:name="android.permission.READ_CONTACTS"/>
+    <uses-permission android:name="android.permission.READ_PHONE_STATE"/>
+    <uses-permission android:name="android.permission.CALL_PHONE"/>
+    <uses-permission android:name="android.permission.MODIFY_AUDIO_SETTINGS"/>
 
     <application
         android:allowBackup="true"
@@ -74,11 +79,20 @@
             android:enabled="true"
             android:exported="true" />
 
+        <service android:name=".CCService"/>
+
         <activity
             android:name=".MusicFolder"
             android:label="@string/title_activity_music_folder"
             android:theme="@style/AppTheme.NoActionBar" />
-        <activity android:name=".FolderCreate"></activity>
+        <activity android:name=".FolderCreate" />
+        <activity
+            android:name=".MusicPlay"
+            android:label="@string/title_activity_music_play"
+            android:theme="@style/AppTheme.NoActionBar"></activity>
+        <activity android:name=".Call_control"
+            android:label="Call"
+            android:theme="@style/AppTheme.NoActionBar"></activity>
     </application>
 
 </manifest>
