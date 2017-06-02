@@ -315,7 +315,6 @@ public class Alram_Service extends Service {
     }
     public void modify(Alram_Infor item, Alram_Infor target)
     {
-
         for(int i=1;i<8;i++)
         {
             if (target.getPattern(i) == false && item.getPattern(i) == true) {
@@ -348,8 +347,14 @@ public class Alram_Service extends Service {
           setAlram(item);
       }
       else
-      {
+      {   if(item.get_redo()==checked.get_redo())
           modify(item,checked);
+          else
+        {
+          alram_list.add(item);
+          add_item(item);
+          setAlram(item);
+                }
       }
     }
     public void setAlram(Alram_Infor item)
@@ -456,6 +461,10 @@ public class Alram_Service extends Service {
         am.cancel(sender);
 
     }
+    public boolean get_alram_state(){
+        return complete_end;
+    }
+
 
     public void write_list(List<Alram_Infor> list)
     {
@@ -613,6 +622,7 @@ public class Alram_Service extends Service {
               releaseAlram(alram_list.get(i));
               alram_list.remove(i);
               write_list(alram_list);
+              break;
           }
       }
     }

@@ -153,8 +153,7 @@ public class Alram extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_alram);
-        Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
-        setSupportActionBar(toolbar);
+
 
          pattern=new boolean[8];
          A_time=(TimePicker)findViewById(R.id.timePicker);
@@ -341,6 +340,7 @@ public class Alram extends AppCompatActivity {
                 fri.setChecked(false);
                 sat.setChecked(false);
                 sun.setChecked(false);
+                alram_list.clearChoices();
             }
         });
 
@@ -356,17 +356,23 @@ public class Alram extends AppCompatActivity {
                 if(alram_service == null){
                     return;
                 }
+                if(alram_list.getCheckedItemCount()==0)
+                {
+                    return;
+                }
                 List<Alram_Infor> temp= alram_service.getAlram_list();
                 alram_service.remove_alram(temp.get(alram_list.getCheckedItemPosition()).getId());
                 int i;
                 temp = alram_service.getAlram_list();
                 alram_item.clear();
+
                 for(i = 0 ; i < temp.size() ; i++){
                     String s = changeItem(temp.get(i));
                     Log.i("정보 : ", s);
                     alram_item.add(s);
                 }
                 adapter.notifyDataSetChanged();
+                alram_list.clearChoices();
             }
         });
     }

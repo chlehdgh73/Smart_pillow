@@ -101,6 +101,7 @@ public class MusicService extends Service {
     int pre_lain_state = BLEService.STATE_LAIN;
 
     private BLEService bluetooth_service = null;
+    private Alram_Service alram_service = null;
 
     private final ServiceConnection mServiceConnection = new ServiceConnection() {
         @Override
@@ -115,6 +116,20 @@ public class MusicService extends Service {
         @Override
         public void onServiceDisconnected(ComponentName componentName) {
             bluetooth_service = null;
+
+        }
+    };
+
+    private final ServiceConnection mServiceConnection2 = new ServiceConnection() {
+        @Override
+        public void onServiceConnected(ComponentName componentName, IBinder service) {
+            alram_service = ((Alram_Service.LocalBinder) service).getService();
+            // Automatically connects to the device upon successful start-up initialization.
+        }
+
+        @Override
+        public void onServiceDisconnected(ComponentName componentName) {
+            alram_service = null;
 
         }
     };
@@ -205,6 +220,11 @@ public class MusicService extends Service {
         Intent service = new Intent(this, BLEService.class);
         bindService(service, mServiceConnection, 0);
 
+        //알람서비스 바인딩
+
+        service = new Intent(this, Alram_Service.class);
+        bindService(service, mServiceConnection2, 0);
+
         //브로드캐스트 리시버 등록
         IntentFilter filter = new IntentFilter(BLEService.STATE_CHANGE_NOTIFY);
         IntentFilter filter2 = new IntentFilter(RESERVE_STOP_MUSIC_ALRAM);
@@ -265,10 +285,17 @@ public class MusicService extends Service {
                 if(pre_lain_state == BLEService.STATE_INIT && next_state == BLEService.STATE_LAIN){
                     //음악을 재생시키고
                     //일정시간뒤에 음악이 자동으로 종료되도록 타이머를 걸어야함.
+                    if(alram_service == null){
+                        return;
+                    }
+                    if(alram_service.get_alram_state() == false){
+                        return;
+                    }
                     start_music();
                     reserve_stop_music();
                 }
                 else {
+
                     //음악이 재생중이였다면 음악을 강제로 종료시켜야함
                     if(bluetooth_service.query_lain_state() == false) {
                         stop_music();

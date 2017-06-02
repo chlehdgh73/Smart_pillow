@@ -44,9 +44,7 @@ public class Main extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        // Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
-        // setSupportActionBar(toolbar);
-        //액티비티 전환
+
         checkPermission();
         //알람
 
@@ -57,10 +55,10 @@ public class Main extends AppCompatActivity {
         Intent service = new Intent(this, BLEService.class);
         startService(service);
 
-        service = new Intent(this, CCService.class);
+        service = new Intent(this, Alram_Service.class);
         startService(service);
 
-        service = new Intent(this, Alram_Service.class);
+        service = new Intent(this, CCService.class);
         startService(service);
 
         service = new Intent(this,MusicService.class);

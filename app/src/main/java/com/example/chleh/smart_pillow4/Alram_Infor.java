@@ -51,11 +51,6 @@ public class Alram_Infor {
         return redo;
     }
 
-
-
-
-
-
     void setId(int id){this.id=id;}
     void setYear(int year)
     {
@@ -115,11 +110,12 @@ public class Alram_Infor {
     {
         for(int i=1;i<8;i++)
         this.pattern[i]=pattern[i];
-
+        this.setredo(this.pattern);
     }
     void setdaypattern(int i)
     {
         this.pattern[i]=true;
+        this.setredo(this.pattern);
     }
 
 
