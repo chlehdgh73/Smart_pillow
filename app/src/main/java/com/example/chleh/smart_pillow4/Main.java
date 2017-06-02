@@ -2,6 +2,7 @@ package com.example.chleh.smart_pillow4;
 
 import android.Manifest;
 import android.app.AlertDialog;
+import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageManager;
@@ -39,6 +40,8 @@ public class Main extends AppCompatActivity {
     boolean is_permission_granted = false;
     private static final String TAG = "AppPermission";
     private final int MY_PERMISSION_REQUEST_STORAGE = 100;
+
+    Context context = this;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -180,7 +183,7 @@ public class Main extends AppCompatActivity {
     }
 
     private void alert_on_gps(){
-        AlertDialog.Builder builder = new AlertDialog.Builder(getApplicationContext());
+        AlertDialog.Builder builder = new AlertDialog.Builder(context);
         builder
                 .setTitle("알림.")
                 .setMessage("블루투스4.0을 사용하기 위한 GPS기능이 켜져있지 않습니다.\nGPS기능을 켜주세요.")
