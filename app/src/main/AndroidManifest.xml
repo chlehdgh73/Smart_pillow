@@ -20,7 +20,7 @@
         android:label="@string/app_name"
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
-        android:theme="@style/AppTheme">
+        android:theme="@style/AppTheme.NoActionBar">
         <activity
             android:name=".Main"
             android:label="@string/app_name"
@@ -35,31 +35,11 @@
             android:name=".Alram"
             android:label="@string/title_activity_alram"
             android:theme="@style/AppTheme.NoActionBar" />
-        <activity
-            android:name=".SleepPattern"
-            android:label="@string/title_activity_sleep_pattern"
-            android:theme="@style/AppTheme.NoActionBar" />
-        <activity
-            android:name=".phone"
-            android:label="@string/title_activity_phone"
-            android:theme="@style/AppTheme.NoActionBar" />
-        <activity
-            android:name=".DeviceListActivity"
-            android:theme="@android:style/Theme.DeviceDefault.Dialog" />
-        <activity
-            android:name=".Music"
-            android:label="@string/title_activity_music"
-            android:theme="@style/AppTheme.NoActionBar" />
 
         <service
             android:name=".MusicService"
             android:enabled="true"
             android:exported="true" />
-
-        <activity
-            android:name=".Alram_Music"
-            android:label="@string/title_activity_alram__music"
-            android:theme="@style/AppTheme.NoActionBar" />
 
         <service
             android:name=".Alram_Service"
@@ -75,7 +55,9 @@
             android:enabled="true"
             android:exported="true" />
 
-        <activity android:name=".Bluetooth" />
+        <activity
+            android:name=".Bluetooth"
+            android:theme="@style/AppTheme.NoActionBar"/>
 
         <service
             android:name=".BLEService"
@@ -83,14 +65,13 @@
             android:exported="true" />
         <service android:name=".CCService" />
 
-        <activity android:name=".FolderCreate" />
         <activity
             android:name=".Call_control"
-            android:label="Call"
             android:theme="@style/AppTheme.NoActionBar" />
-        <activity android:name=".AnalysisActivity" />
-        <activity android:name=".music_play" />
-
+        <activity android:name=".AnalysisActivity"
+            android:theme="@style/AppTheme.NoActionBar"/>
+        <activity android:name=".music_play"
+            android:theme="@style/AppTheme.NoActionBar"/>
     </application>
 
 </manifest>
