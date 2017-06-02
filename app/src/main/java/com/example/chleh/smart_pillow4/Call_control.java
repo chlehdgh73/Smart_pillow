@@ -42,6 +42,7 @@ public class Call_control extends AppCompatActivity {
             cc_service = ((CCService.LocalBinder) service).getService();
             switch1.setChecked(cc_service.get_on_off_state());
             list_adapter.modifyItem(cc_service.get_allow_list());
+            list_adapter.notifyDataSetChanged();
 
             // Automatically connects to the device upon successful start-up initialization.
         }

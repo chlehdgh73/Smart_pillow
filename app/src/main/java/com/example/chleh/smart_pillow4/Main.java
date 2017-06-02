@@ -54,7 +54,6 @@ public class Main extends AppCompatActivity {
             Toast.makeText(this, "권한이 거절되었습니다.", Toast.LENGTH_SHORT).show();
             finish();
         }
-
         Intent service = new Intent(this, BLEService.class);
         startService(service);
 
@@ -62,6 +61,9 @@ public class Main extends AppCompatActivity {
         startService(service);
 
         service = new Intent(this, Alram_Service.class);
+        startService(service);
+
+        service = new Intent(this,MusicService.class);
         startService(service);
 
         Button button = (Button) findViewById(R.id.button6);
@@ -91,7 +93,7 @@ public class Main extends AppCompatActivity {
             public void onClick(View arg0) {
 
 
-                Intent k = new Intent(getApplicationContext(), MusicFolder.class);
+                Intent k = new Intent(getApplicationContext(), music_play.class);
                 startActivity(k);
             }
         });
@@ -100,7 +102,7 @@ public class Main extends AppCompatActivity {
         button4.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View arg0) {
-                Intent j = new Intent(getApplicationContext(), SleepPattern.class);
+                Intent j = new Intent(getApplicationContext(), AnalysisActivity.class);
                 startActivity(j);
             }
         });

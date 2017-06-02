@@ -7,12 +7,12 @@
     <uses-permission android:name="android.permission.BLUETOOTH_ADMIN" />
     <uses-permission android:name="android.permission.BLUETOOTH" />
     <uses-permission android:name="android.permission.READ_USER_DICTIONARY" />
-    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION"/>
-    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION"/>
-    <uses-permission android:name="android.permission.READ_CONTACTS"/>
-    <uses-permission android:name="android.permission.READ_PHONE_STATE"/>
-    <uses-permission android:name="android.permission.CALL_PHONE"/>
-    <uses-permission android:name="android.permission.MODIFY_AUDIO_SETTINGS"/>
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+    <uses-permission android:name="android.permission.READ_CONTACTS" />
+    <uses-permission android:name="android.permission.READ_PHONE_STATE" />
+    <uses-permission android:name="android.permission.CALL_PHONE" />
+    <uses-permission android:name="android.permission.MODIFY_AUDIO_SETTINGS" />
 
     <application
         android:allowBackup="true"
@@ -46,7 +46,6 @@
         <activity
             android:name=".DeviceListActivity"
             android:theme="@android:style/Theme.DeviceDefault.Dialog" />
-        <activity android:name=".MusicPlayer" />
         <activity
             android:name=".Music"
             android:label="@string/title_activity_music"
@@ -71,6 +70,10 @@
             android:name=".MyReceiver"
             android:enabled="true"
             android:exported="true" />
+        <receiver
+            android:name=".music_stop_receiver"
+            android:enabled="true"
+            android:exported="true" />
 
         <activity android:name=".Bluetooth" />
 
@@ -78,21 +81,16 @@
             android:name=".BLEService"
             android:enabled="true"
             android:exported="true" />
+        <service android:name=".CCService" />
 
-        <service android:name=".CCService"/>
-
-        <activity
-            android:name=".MusicFolder"
-            android:label="@string/title_activity_music_folder"
-            android:theme="@style/AppTheme.NoActionBar" />
         <activity android:name=".FolderCreate" />
         <activity
-            android:name=".MusicPlay"
-            android:label="@string/title_activity_music_play"
-            android:theme="@style/AppTheme.NoActionBar"></activity>
-        <activity android:name=".Call_control"
+            android:name=".Call_control"
             android:label="Call"
-            android:theme="@style/AppTheme.NoActionBar"></activity>
+            android:theme="@style/AppTheme.NoActionBar" />
+        <activity android:name=".AnalysisActivity" />
+        <activity android:name=".music_play" />
+
     </application>
 
 </manifest>

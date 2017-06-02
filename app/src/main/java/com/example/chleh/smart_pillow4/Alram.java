@@ -103,37 +103,49 @@ public class Alram extends AppCompatActivity {
     public String changeItem(Alram_Infor item)
     {
         String result;
-        result=String.format("%d일 %d시 %d분",item.getDay(),item.getHour(),item.getMin());
-        if(pattern[2]==true)
+        result=String.format("%d시 %d분",item.getHour(),item.getMin());
+        if(item.get_redo()==true)
+            {
+                result+=", 반복요일 : ";
+            }else {
+                Calendar cal= Calendar.getInstance();
+                int temp=cal.get(Calendar.DAY_OF_MONTH);
+                if(temp==item.getDay())
+                {
+                    result+=", 오늘";
+                }else{
+                    result+=", 내일";
+                }
+              }
+        if(item.getPattern(2)==true)
         {
             result+=" 월";
         }
-        if(pattern[3]==true)
+        if(item.getPattern(3)==true)
         {
             result+=" 화";
         }
-        if(pattern[4]==true)
+        if(item.getPattern(4)==true)
         {
             result+=" 수";
         }
-        if(pattern[5]==true)
+        if(item.getPattern(5)==true)
         {
             result+=" 목";
         }
-        if(pattern[6]==true)
+        if(item.getPattern(6)==true)
         {
             result+=" 금";
         }
-        if(pattern[7]==true)
+        if(item.getPattern(7)==true)
         {
             result+=" 토";
         }
-        if(pattern[1]==true)
+        if(item.getPattern(1)==true)
         {
             result+=" 일";
         }
         return result;
-
     }
 
 
@@ -159,18 +171,14 @@ public class Alram extends AppCompatActivity {
 
         Intent service = new Intent(this, Alram_Service.class);
         bindService(service, mServiceConnection, 0);
-
-
         /*
         반복되는 요일정보 setting
         디폴트 false;
          */
         SetDay(pattern);
-
         alram_list.setAdapter(adapter);
-
+        adapter.notifyDataSetChanged();
         //시간 계산
-
         mon.setOnClickListener(new View.OnClickListener() {
 
             @Override
@@ -368,6 +376,15 @@ public class Alram extends AppCompatActivity {
 
         IntentFilter filter = new IntentFilter(Alram_Service.ALRAM_DONE);
         registerReceiver(mBroadcastRecevier, filter);
+        if(alram_service != null) {
+            int i;
+            List<Alram_Infor> temp = alram_service.getAlram_list();
+            alram_item.clear();
+            for (i = 0; i < temp.size(); i++) {
+                alram_item.add(changeItem(temp.get(i)));
+            }
+            adapter.notifyDataSetChanged();
+        }
     }
 
     @Override

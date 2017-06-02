@@ -233,7 +233,7 @@ public class CCService extends Service {
             String state = intent.getStringExtra(TelephonyManager.EXTRA_STATE);
 
             if(state.equals(call_state)){
-                //return;
+                return;
             }
             else{
                 call_state = state;

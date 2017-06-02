@@ -1,125 +1,520 @@
 package com.example.chleh.smart_pillow4;
 
+import android.app.AlarmManager;
+import android.app.PendingIntent;
 import android.app.Service;
+import android.content.BroadcastReceiver;
+import android.content.ComponentName;
+import android.content.Context;
 import android.content.Intent;
-import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
+import android.content.IntentFilter;
+import android.content.ServiceConnection;
+import android.database.Cursor;
 import android.media.MediaPlayer;
 import android.net.Uri;
 import android.os.Binder;
 import android.os.IBinder;
 import android.provider.MediaStore;
+import android.support.v7.widget.LinearLayoutCompat;
 import android.util.Log;
-import android.view.View;
-import android.widget.ImageView;
-import android.widget.SeekBar;
-import android.widget.TextView;
+
+import java.io.BufferedReader;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.PrintWriter;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.List;
+import java.util.Random;
+
+/**
+ * Created by PH8 on 2017-06-01.
+ */
+
+class music_item{
+    String id;
+    String name;
+    String artist;
+
+    public music_item(){
+        id = "";
+        name = "";
+        artist = "";
+    }
+    public music_item(String id, String name, String artist){
+        if(id == null){
+            this.id = "";
+        }
+        else{
+            this.id = id;
+        }
+        if(name == null){
+            this.name = "";
+        }
+        else {
+            this.name = name;
+        }
+        if(artist == null) {
+            this.artist = "";
+        }
+        else{
+            this.artist = artist;
+        }
+    }
+
+    public boolean isEqual(music_item target){
+        if(this.id.equals(target.id)){
+            return true;
+        }
+        return false;
+    }
+}
+
+class music_sorting implements Comparator<music_item> {
+    @Override
+    public int compare(music_item target1, music_item target2){
+        return target1.name.compareTo(target2.name);
+    }
+}
 
 public class MusicService extends Service {
-   MediaPlayer mediaPlayer;
+    public final static String RESERVE_STOP_MUSIC_ALRAM = "reserve_event_triger";
+
+    List<music_item> music_list = new ArrayList<>();
+    private final static String SAVED_LIST_FILE_NAME = "music_list.txt";
+    private final static String SAVED_STAET_FILE_NAME = "music_state.txt";
+
+    private boolean on_off_state = false;
+    private boolean random_play = false;
+    private int play_time = 60 * 1000;
+    private int last_play = -1;
+
+    private MediaPlayer mediaPlayer = new MediaPlayer();
+
+    private boolean is_stop_reserved = false;
+    private int stop_alram_id = 123456789;
+
+    int pre_lain_state = BLEService.STATE_LAIN;
+
+    private BLEService bluetooth_service = null;
+
+    private final ServiceConnection mServiceConnection = new ServiceConnection() {
+        @Override
+        public void onServiceConnected(ComponentName componentName, IBinder service) {
+            bluetooth_service = ((BLEService.LocalBinder) service).getService();
+
+            pre_lain_state = bluetooth_service.query_state();
+
+            // Automatically connects to the device upon successful start-up initialization.
+        }
+
+        @Override
+        public void onServiceDisconnected(ComponentName componentName) {
+            bluetooth_service = null;
+
+        }
+    };
+
+
     private final IBinder mBinder = new LocalBinder();
-    private int oncreate;
-    private  int time;
-    public MusicService() {
-    }
+
     public class LocalBinder extends Binder {
         MusicService getService() {
             return MusicService.this;
         }
     }
-    public void onRebind(Intent intent){
-        Log.i("정보 : ","onRebind 호출");
+
+    @Override
+    public void onCreate(){
+        //저장해 두었던 리스트 복원
+        music_list.clear();
+        FileInputStream file_in = null;
+        BufferedReader buffer = null;
+        music_item temp;
+        String id, name, artist;
+        try {
+            file_in = openFileInput(SAVED_LIST_FILE_NAME);
+            buffer = new BufferedReader(new InputStreamReader(file_in));
+
+            while((id = buffer.readLine()) != null){
+                name = buffer.readLine();
+                artist = buffer.readLine();
+                temp = new music_item(id, name, artist);
+                music_list.add(temp);
+            }
+        }
+        catch (FileNotFoundException e) {}
+        catch (IOException e1){}
+        finally {
+            try {
+                if(buffer != null){
+                    buffer.close();
+                    buffer = null;
+                }
+                if(file_in != null){
+                    file_in.close();
+                    file_in = null;
+                }
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+        //기능 on인지 off인지 확인
+        on_off_state = false;
+        try {
+            file_in = openFileInput(SAVED_STAET_FILE_NAME);
+            buffer = new BufferedReader(new InputStreamReader(file_in));
+            if(Integer.parseInt(buffer.readLine()) != 0){
+                on_off_state = true;
+            }
+            else{
+                on_off_state = false;
+            }
+            if(Integer.parseInt(buffer.readLine()) != 0){
+                random_play = true;
+            }
+            else{
+                random_play = false;
+            }
+            play_time = Integer.parseInt(buffer.readLine());
+        }
+        catch (FileNotFoundException e) {}
+        catch (IOException e1){}
+        finally {
+            try {
+                if(buffer != null) buffer.close();
+                if(file_in != null) file_in.close();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+
+        mediaPlayer.setOnCompletionListener(new MediaPlayer.OnCompletionListener(){
+            @Override
+            public void onCompletion(MediaPlayer mp) {
+                start_music();
+            }
+        });
+
+        //블루투스 서비스 바인딩
+
+        Intent service = new Intent(this, BLEService.class);
+        bindService(service, mServiceConnection, 0);
+
+        //브로드캐스트 리시버 등록
+        IntentFilter filter = new IntentFilter(BLEService.STATE_CHANGE_NOTIFY);
+        IntentFilter filter2 = new IntentFilter(RESERVE_STOP_MUSIC_ALRAM);
+        registerReceiver(mReceiver, filter);
+        registerReceiver(mReceiver, filter2);
+
     }
 
     @Override
-        public boolean onUnbind(Intent intent){
-        Log.i("정보 : ","onUnbind 호출");
-     //  mediaPlayer.pause();
-        return true;
-    }
-    @Override
-               public IBinder onBind(final Intent intent) {
-                // TODO: Return the communication channel to the service.
-                try {
-                    if(intent.getIntExtra("restart",0)==0) {
-                        Uri musicURI = Uri.withAppendedPath(MediaStore.Audio.Media.EXTERNAL_CONTENT_URI, "" + intent.getStringExtra("id"));
-                        mediaPlayer.reset();
-                        mediaPlayer.setDataSource(this, musicURI);
-                        mediaPlayer.prepare();
-                        mediaPlayer.start();
-                    }
-                    else//다시시작
-           {
-                    Uri musicURI = Uri.withAppendedPath(MediaStore.Audio.Media.EXTERNAL_CONTENT_URI, "" + intent.getStringExtra("id"));
-                    mediaPlayer.reset();
-                    mediaPlayer.setDataSource(this, musicURI);
-                    mediaPlayer.prepare();
-                    mediaPlayer.seekTo(intent.getIntExtra("restart",0));
-                    mediaPlayer.start();
-                }
-            mediaPlayer.setOnCompletionListener(new MediaPlayer.OnCompletionListener() {
-                @Override
-                public void onCompletion(MediaPlayer mp) {
-                    if(intent.getIntExtra("position",0)<intent.getIntExtra("size",0)) {
-                       try {
-                          Uri musicURI = Uri.withAppendedPath(MediaStore.Audio.Media.EXTERNAL_CONTENT_URI, "" + intent.getStringExtra("id+1"));
-                        mediaPlayer.reset();
-                           mediaPlayer.setDataSource(getApplicationContext(), musicURI);
-                         mediaPlayer.prepare();
-                          mediaPlayer.start();
-                       }
-                       catch (Exception e)
-                       {
+    public int onStartCommand(Intent intent, int flags, int startid){
 
-                       }
-                    }
-                }
-            });
-        }
-        catch (Exception e) {
-            Log.e("SimplePlayer", e.getMessage());
-        }
-        oncreate=1;
+        return super.onStartCommand(intent, flags, startid);
+    }
+
+    public IBinder onBind(Intent intent){
         return mBinder;
     }
-    public void onCreate() {
-        super.onCreate();
-    mediaPlayer = new MediaPlayer();
-    oncreate=0;
-    // 서비스에서 가장 먼저 호출됨(최초에 한번만)
-}
-    public int getoncreate()
-    {
-        return oncreate;
-    }
-    public int getcur()
-    {
-        return mediaPlayer.getCurrentPosition();
-    }
-
-
 
     @Override
-    public int onStartCommand(Intent intent, int flags, int startId)
-            {
+    public void onRebind(Intent intent){
 
-        return START_STICKY;
     }
 
-    public MediaPlayer player()
-{
-    return mediaPlayer;
-}
+    @Override
+    public boolean onUnbind(Intent intent){
 
+        return true;
+    }
 
     @Override
     public void onDestroy(){
         super.onDestroy();
-        Log.i("정보 : ","onDestroy 호출");
+        //브로드캐스트 리시버 해제
+        unregisterReceiver(mReceiver);
+        mediaPlayer.release();
+        mediaPlayer = null;
     }
 
+    BroadcastReceiver mReceiver = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            if(on_off_state == false){
+                return;
+            }
 
+            if(bluetooth_service == null) {
+                return;
+            }
 
+            String action = intent.getAction();
+            int next_state;
 
+            if(action.equals(BLEService.STATE_CHANGE_NOTIFY)){
+                next_state = intent.getIntExtra(BLEService.NOTIFY_STATE, 1);
+                //음악 자동재생은 초기상태에서 누운 상태로 변할때만 재생하는것이다.
+                //누워있다가 다시 일어나면 음악을 재생할 필요가 없으므로 다시 꺼야한다.
 
+                if(pre_lain_state == BLEService.STATE_INIT && next_state == BLEService.STATE_LAIN){
+                    //음악을 재생시키고
+                    //일정시간뒤에 음악이 자동으로 종료되도록 타이머를 걸어야함.
+                    start_music();
+                    reserve_stop_music();
+                }
+                else {
+                    //음악이 재생중이였다면 음악을 강제로 종료시켜야함
+                    if(bluetooth_service.query_lain_state() == false) {
+                        stop_music();
+                    }
+                }
+
+                pre_lain_state = next_state;
+            }
+            else if(action.equals(MusicService.RESERVE_STOP_MUSIC_ALRAM)){
+                is_stop_reserved = false;
+                stop_music();
+            }
+        }
+    };
+
+    private void start_music(){
+        Random random = new Random();
+        String music_id;
+        Uri musicURI;
+        if(music_list.size() == 0){
+            return;
+        }
+
+        if(random_play == true){
+            last_play = random.nextInt(music_list.size());
+        }
+        else{
+            last_play = (last_play + 1) % music_list.size();
+        }
+
+        try {
+            music_id = music_list.get(last_play).id;
+            musicURI = Uri.withAppendedPath(MediaStore.Audio.Media.EXTERNAL_CONTENT_URI, "" + music_id);
+            mediaPlayer.reset();
+            mediaPlayer.setDataSource(this, musicURI);
+            mediaPlayer.prepare();
+            mediaPlayer.start();
+        }
+        catch (Exception e){}
+    }
+
+    private void stop_music(){
+        if(is_stop_reserved == true){
+            Intent alram = new Intent(this, music_stop_receiver.class);
+            PendingIntent sender = PendingIntent.getBroadcast(this, stop_alram_id, alram, 0);
+            AlarmManager am = (AlarmManager) getSystemService(Context.ALARM_SERVICE);
+            am.cancel(sender);
+            is_stop_reserved = false;
+        }
+        if(mediaPlayer.isPlaying() == true){
+            mediaPlayer.stop();
+        }
+    }
+
+    private void reserve_stop_music(){
+        Intent alram = new Intent(this, music_stop_receiver.class);
+        PendingIntent sender = PendingIntent.getBroadcast(this, stop_alram_id, alram, 0);
+
+        long timer = System.currentTimeMillis() + play_time;
+
+        AlarmManager am = (AlarmManager)getSystemService(Context.ALARM_SERVICE);
+        am.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP,timer,sender);
+    }
+
+    public void turn_on(){
+        on_off_state = true;
+        state_file_write();
+    }
+
+    public void turn_off(){
+        on_off_state = false;
+        state_file_write();
+    }
+
+    public boolean get_on_off_state(){
+        return on_off_state;
+    }
+
+    public boolean get_random_play_state(){
+        return random_play;
+    }
+
+    public int get_play_time(){
+        return play_time;
+    }
+
+    public List<music_item> get_all_list(){
+        music_item temp;
+        List<music_item> all_music_list = new ArrayList<>();
+        Uri query_uri = MediaStore.Audio.Media.EXTERNAL_CONTENT_URI;
+        String[] selection = new String[]{MediaStore.Audio.Media._ID, MediaStore.Audio.Media.TITLE, MediaStore.Audio.Media.ARTIST};
+        String sortOrder = MediaStore.Audio.Media.TITLE + " COLLATE LOCALIZED ASC";
+
+        Cursor musicCursor = this.getContentResolver().query(query_uri, selection, null, null, sortOrder);
+
+        if(musicCursor.moveToFirst()){
+            do{
+                String id = musicCursor.getString(0);
+                String name = musicCursor.getString(1);
+                String artist = musicCursor.getString(2);
+                temp = new music_item(id, name, artist);
+                all_music_list.add(temp);
+            }
+            while(musicCursor.moveToNext());
+        }
+
+        return all_music_list;
+    }
+
+    public List<music_item> get_allow_list(){
+        return music_list;
+    }
+
+    public void add_list(List<music_item> item){
+        boolean is_equal;
+        for(music_item list : item){
+            is_equal = false;
+            for(music_item comp : music_list){
+                if(list.isEqual(comp) == true){
+                    is_equal = true;
+                    break;
+                }
+            }
+            if(is_equal == false){
+                music_list.add(list);
+            }
+        }
+        last_play = -1;
+        Collections.sort(music_list, new music_sorting());
+        music_list_file_write();
+    }
+
+    public void remove_list(List<music_item> items){
+        int index;
+        for(music_item list : items){
+            index = 0;
+            for(music_item comp : music_list){
+                if(list.isEqual(comp) == true){
+                    music_list.remove(index);
+                    break;
+                }
+                index++;
+            }
+        }
+        last_play = -1;
+        music_list_file_write();
+    }
+
+    public void remove_list(music_item item){
+        int index;
+        index = 0;
+        for(music_item comp : music_list){
+            if(item.isEqual(comp) == true){
+                music_list.remove(index);
+                break;
+            }
+            index++;
+        }
+        last_play = -1;
+        music_list_file_write();
+    }
+
+    public void set_random_play(boolean state){
+        random_play = state;
+        state_file_write();
+    }
+
+    public void set_play_time(int time){
+        if(time < 0){
+            return;
+        }
+        if(time > (100 * 60 * 1000)){
+            play_time = 100 * 60 * 1000;
+            return;
+        }
+        play_time = time;
+        state_file_write();
+    }
+
+    private void state_file_write(){
+        FileOutputStream file_out = null;
+        PrintWriter writer = null;
+
+        //여기서 파일을 읽어서 저장된 설정(선택된 베개의 블루투스 주소)를 읽어온다.
+        try {
+            file_out = openFileOutput(SAVED_STAET_FILE_NAME,Context.MODE_PRIVATE);
+            writer = new PrintWriter(file_out);
+
+            if(on_off_state == true){
+                writer.println(1);
+            }
+            else{
+                writer.println(0);
+            }
+            if(random_play == true){
+                writer.println(1);
+            }
+            else{
+                writer.println(0);
+            }
+            writer.println(play_time);
+
+        } catch (FileNotFoundException e) {
+            //파일이 없고 생성도 실패
+        }
+        catch (IOException e1){
+            //왜 발생할지 감도 안잡힙니다.
+        }
+        finally{
+            try {
+                if(writer != null) writer.close();
+                if(file_out != null) file_out.close();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+    }
+
+    private void music_list_file_write(){
+        FileOutputStream file_out = null;
+        PrintWriter writer = null;
+
+        //여기서 파일을 읽어서 저장된 설정(선택된 베개의 블루투스 주소)를 읽어온다.
+        try {
+            file_out = openFileOutput(SAVED_LIST_FILE_NAME,Context.MODE_PRIVATE);
+            writer = new PrintWriter(file_out);
+
+            for(music_item list : music_list){
+                writer.println(list.id);
+                writer.println(list.name);
+                writer.println(list.artist);
+            }
+
+        } catch (FileNotFoundException e) {
+            //파일이 없고 생성도 실패
+        }
+        catch (IOException e1){
+            //왜 발생할지 감도 안잡힙니다.
+        }
+        finally{
+            try {
+                if(writer != null) writer.close();
+                if(file_out != null) file_out.close();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+    }
 }

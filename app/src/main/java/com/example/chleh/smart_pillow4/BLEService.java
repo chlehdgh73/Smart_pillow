@@ -411,7 +411,7 @@ public class BLEService extends Service {
         @Override
         public void onCharacteristicChanged(BluetoothGatt gatt, BluetoothGattCharacteristic characteristic) {
             //여기서 데이터를 읽어들이는 작업을 해야한다.
-            Log.i("정보 : ","캐릭터변경");
+            //Log.i("정보 : ","캐릭터변경");
             data_process(characteristic);
         }
 
@@ -475,7 +475,7 @@ public class BLEService extends Service {
                 i++;
             }
             long time = System.currentTimeMillis();
-            Log.i("정보 : ", "" + value[0] + "," + value[1] + "," + value[2]);
+            //Log.i("정보 : ", "" + value[0] + "," + value[1] + "," + value[2]);
 
             Intent intent = new Intent(STATE_CHANGE_NOTIFY);
 
@@ -492,6 +492,8 @@ public class BLEService extends Service {
                         is_lain = true;
                         now_state = STATE_LAIN;
                         state_start_time = time;
+
+                        Log.i("정보 : ", ""+now_state);
 
                         intent.putExtra(NOTIFY_STATE, now_state);
                         sendBroadcast(intent);
@@ -515,6 +517,8 @@ public class BLEService extends Service {
                                 now_state = STATE_DEEP;
                                 state_start_time = time;
 
+                                Log.i("정보 : ", ""+now_state);
+
                                 intent.putExtra(NOTIFY_STATE, now_state);
                                 sendBroadcast(intent);
                             }
@@ -526,6 +530,8 @@ public class BLEService extends Service {
                         is_lain = false;
                         now_state = STATE_INIT;
                         state_start_time = time;
+
+                        Log.i("정보 : ", ""+now_state);
 
                         intent.putExtra(NOTIFY_STATE, now_state);
                         sendBroadcast(intent);
@@ -540,6 +546,8 @@ public class BLEService extends Service {
                             now_state = STATE_SHALLOW;
                             state_start_time = time;
 
+                            Log.i("정보 : ", ""+now_state);
+
                             intent.putExtra(NOTIFY_STATE, now_state);
                             sendBroadcast(intent);
                         }
@@ -550,6 +558,8 @@ public class BLEService extends Service {
                         is_lain = false;
                         now_state = STATE_TEMP_AWAKE;
                         state_start_time = time;
+
+                        Log.i("정보 : ", ""+now_state);
 
                         intent.putExtra(NOTIFY_STATE, now_state);
                         sendBroadcast(intent);
@@ -569,6 +579,8 @@ public class BLEService extends Service {
                                 now_state = STATE_DEEP;
                                 state_start_time = time;
 
+                                Log.i("정보 : ", ""+now_state);
+
                                 intent.putExtra(NOTIFY_STATE, now_state);
                                 sendBroadcast(intent);
                             }
@@ -580,6 +592,8 @@ public class BLEService extends Service {
                         is_lain = false;
                         now_state = STATE_TEMP_AWAKE;
                         state_start_time = time;
+
+                        Log.i("정보 : ", ""+now_state);
 
                         intent.putExtra(NOTIFY_STATE, now_state);
                         sendBroadcast(intent);
@@ -593,6 +607,8 @@ public class BLEService extends Service {
                         now_state = STATE_RE_LAIN;
                         state_start_time = time;
 
+                        Log.i("정보 : ", ""+now_state);
+
                         intent.putExtra(NOTIFY_STATE, now_state);
                         sendBroadcast(intent);
                     }
@@ -602,6 +618,8 @@ public class BLEService extends Service {
                             save_change_log(STATE_COMPLETE_AWAKE, time);
                             now_state = STATE_COMPLETE_AWAKE;
                             state_start_time = time;
+
+                            Log.i("정보 : ", ""+now_state);
 
                             intent.putExtra(NOTIFY_STATE, now_state);
                             sendBroadcast(intent);
@@ -622,6 +640,8 @@ public class BLEService extends Service {
                                 now_state = STATE_DEEP;
                                 state_start_time = time;
 
+                                Log.i("정보 : ", ""+now_state);
+
                                 intent.putExtra(NOTIFY_STATE, now_state);
                                 sendBroadcast(intent);
                             }
@@ -634,6 +654,8 @@ public class BLEService extends Service {
                         now_state = STATE_TEMP_AWAKE;
                         state_start_time = time;
 
+                        Log.i("정보 : ", ""+now_state);
+
                         intent.putExtra(NOTIFY_STATE, now_state);
                         sendBroadcast(intent);
 
@@ -645,6 +667,8 @@ public class BLEService extends Service {
                     save_state(STATE_INIT, time);
                     now_state = STATE_INIT;
                     state_start_time = time;
+
+                    Log.i("정보 : ", ""+now_state);
 
                     intent.putExtra(NOTIFY_STATE, now_state);
                     sendBroadcast(intent);
