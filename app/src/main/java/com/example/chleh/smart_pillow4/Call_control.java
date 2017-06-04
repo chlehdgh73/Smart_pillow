@@ -1,5 +1,4 @@
 package com.example.chleh.smart_pillow4;
-
 import android.Manifest;
 import android.app.AlertDialog;
 import android.content.ComponentName;
@@ -26,7 +25,6 @@ import android.widget.TextView;
 
 import java.util.ArrayList;
 import java.util.List;
-
 public class Call_control extends AppCompatActivity {
 
     private Button button1;
@@ -43,14 +41,11 @@ public class Call_control extends AppCompatActivity {
             switch1.setChecked(cc_service.get_on_off_state());
             list_adapter.modifyItem(cc_service.get_allow_list());
             list_adapter.notifyDataSetChanged();
-
-            // Automatically connects to the device upon successful start-up initialization.
         }
 
         @Override
         public void onServiceDisconnected(ComponentName componentName) {
             cc_service = null;
-
         }
     };
 
@@ -58,17 +53,12 @@ public class Call_control extends AppCompatActivity {
     protected void onCreate(final Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_call_control);
-
         button1 = (Button)findViewById(R.id.cc_button1);
         switch1 = (Switch)findViewById(R.id.cc_switch1);
         listview = (ListView)findViewById(R.id.cc_listView);
-
         list_adapter = new ListViewAdapter();
         listview.setAdapter(list_adapter);
-
-
         Intent service = new Intent(this, CCService.class);
-
         bindService(service, mServiceConnection, 0);
 
         button1.setOnClickListener(new View.OnClickListener() {
@@ -77,9 +67,7 @@ public class Call_control extends AppCompatActivity {
                 if(cc_service == null){
                     return;
                 }
-
                 final List<Phone_number> all_list = cc_service.get_all_list();
-
                 CharSequence[] items = new String[all_list.size()];
                 for(int i = 0 ; i < all_list.size() ; i++){
                     items[i] = all_list.get(i).name + "\n" + all_list.get(i).number;
@@ -95,7 +83,6 @@ public class Call_control extends AppCompatActivity {
                             @Override
                             public void onClick(DialogInterface dialog, int which, boolean isChecked) {
                                 if(isChecked == true){
-
                                     selected_items.add(all_list.get(which));
                                 }
                                 else{
@@ -143,8 +130,6 @@ public class Call_control extends AppCompatActivity {
             @Override
             public boolean onItemLongClick(AdapterView<?> parent, View view, int position, long id) {
                 final Phone_number item = (Phone_number)parent.getItemAtPosition(position);
-                //삭제할껀지 물어보는 다이얼로그박스출력
-                //yes이면 삭제요청
                 if(cc_service == null){
                     return true;
                 }
@@ -173,8 +158,6 @@ public class Call_control extends AppCompatActivity {
                 return true;
             }
         });
-
-
     }
 
     private class ListViewAdapter extends BaseAdapter{
@@ -215,7 +198,6 @@ public class Call_control extends AppCompatActivity {
             return view;
         }
 
-        //비효율적이지만 서비스가 다루는 allow_list에 쓰기를 하는건 위험하므로
         public void modifyItem(List<Phone_number> list){
             list_item.clear();
             for(Phone_number item : list){

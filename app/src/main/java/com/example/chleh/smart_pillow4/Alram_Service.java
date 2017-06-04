@@ -1,5 +1,4 @@
 package com.example.chleh.smart_pillow4;
-
 import android.app.AlarmManager;
 import android.app.PendingIntent;
 import android.app.Service;
@@ -32,33 +31,22 @@ import java.util.GregorianCalendar;
 import java.util.List;
 import java.util.Random;
 import java.util.StringTokenizer;
-
-
 public class Alram_Service extends Service {
     private MediaPlayer mediaPlayer=new MediaPlayer();
-    private GregorianCalendar cal, first, second, result;
-
     public static final String ALRAM_START = "ALRAM_START";
     public static final String ALRAM_CANCLE = "ALRAM_CANCLE";
     public static final String ALRAM_DONE = "ALRAM_DONE";
     private final int cancle_timer = 55555555;
     private boolean complete_end = true;
-
     private final IBinder mBinder = new LocalBinder();
-
-    public static ArrayList<Alram_Infor> alram_infor_list;
-    private Thread alram_thread = null;
     private BLEService bluetooth_service = null;
-    public static PendingIntent sender= null;
     private List<Alram_Infor> alram_list = new ArrayList<>();
 
     private final ServiceConnection mServiceConnection = new ServiceConnection() {
         @Override
         public void onServiceConnected(ComponentName componentName, IBinder service) {
             bluetooth_service = ((BLEService.LocalBinder) service).getService();
-            // Automatically connects to the device upon successful start-up initialization.
         }
-
         @Override
         public void onServiceDisconnected(ComponentName componentName) {
             bluetooth_service = null;
@@ -75,7 +63,6 @@ public class Alram_Service extends Service {
         @Override
         public void onReceive(Context context, Intent intent) {
             String action = intent.getAction();
-
             if (action.equals(BLEService.STATE_CHANGE_NOTIFY)) {
 
                 if(bluetooth_service == null){
@@ -92,7 +79,6 @@ public class Alram_Service extends Service {
                         PendingIntent sender = PendingIntent.getBroadcast(Alram_Service.this, cancle_timer, alram, 0);
                         AlarmManager am = (AlarmManager) getSystemService(Context.ALARM_SERVICE);
                         am.cancel(sender);
-
                         mediaPlayer.seekTo(0);
                         mediaPlayer.start();
                     }
@@ -104,11 +90,8 @@ public class Alram_Service extends Service {
                     long timer = System.currentTimeMillis() + (600*1000);
                     AlarmManager am = (AlarmManager)getSystemService(Context.ALARM_SERVICE);
                     am.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP,timer,sender);
-
                     mediaPlayer.pause();
                 }
-
-
             }
             else if(action.equals(ALRAM_START)){
                 int id = intent.getIntExtra("this_is_id", -1);
@@ -128,7 +111,6 @@ public class Alram_Service extends Service {
                 if(temp == null){
                     return;
                 }
-
                 if(temp.get_redo() == false){
                     alram_list.remove(temp);
                     Intent send = new Intent(ALRAM_DONE);
@@ -140,7 +122,6 @@ public class Alram_Service extends Service {
                 if(mediaPlayer.isPlaying())
                 {
                    return;
-
                 }
                 else{
                     if(bluetooth_service == null){
@@ -162,19 +143,16 @@ public class Alram_Service extends Service {
 
     @Override
     public void onCreate() {
-        Log.i("정보 : ", "알람서비스가 생성되었음");
         read_infor();
-
         Intent service = new Intent(this, BLEService.class);
         bindService(service, mServiceConnection, 0);
-
         setReceiver();
-
         int size=alram_list.size();
         int temp_size;
+
         for(int i=0;i<size;i++)
         {
-            setAlram(alram_list.get(i));//하다가 제거하면 인덱스 엿됨
+            setAlram(alram_list.get(i));
             temp_size=alram_list.size();
             if(temp_size!=size)
             {
@@ -194,7 +172,6 @@ public class Alram_Service extends Service {
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
-
         return super.onStartCommand(intent,flags,startId);
     }
 
@@ -224,12 +201,12 @@ public class Alram_Service extends Service {
     {
         FileInputStream fis;
         BufferedReader bufferReader;
-        // 파일 내용 읽어오기
+
         try {
             fis = openFileInput("myFile.txt");
             bufferReader = new BufferedReader(new InputStreamReader(fis));
-            String content="", temp="";
-            while( (temp = bufferReader.readLine()) != null ) {//파일 끝까지 모든 정보 읽어서 리스트에 저장
+            String temp="";
+            while( (temp = bufferReader.readLine()) != null ) {
                 StringTokenizer tokens= new StringTokenizer(temp);
                 int temp_year=0;
                 int temp_month=0;
@@ -265,14 +242,12 @@ public class Alram_Service extends Service {
         {
             return false;
         }
-
             return true;
     }
 
     private Alram_Infor check_same(Alram_Infor item)
     {
         int size=alram_list.size();
-
         for(int i=0; i<size;i++)
         {
             if(alram_list.get(i).getYear()!=item.getYear())//년
@@ -297,7 +272,6 @@ public class Alram_Service extends Service {
             }
             return alram_list.get(i);
         }
-
         return null;
     }
 
@@ -328,9 +302,9 @@ public class Alram_Service extends Service {
     public void add_alram(Alram_Infor item)
     {
       Alram_Infor checked = check_same(item);
-      if(checked == null)//같은게 없을경우 추가
+      if(checked == null)
       {
-          while(true)//id  식별
+          while(true)
           {
               if(check_id(item.getId())==-1)
               {
@@ -349,12 +323,12 @@ public class Alram_Service extends Service {
       else
       {   if(item.get_redo()==checked.get_redo())
           modify(item,checked);
-          else
+        else
         {
           alram_list.add(item);
           add_item(item);
           setAlram(item);
-                }
+        }
       }
     }
     public void setAlram(Alram_Infor item)
@@ -415,9 +389,8 @@ public class Alram_Service extends Service {
                 today.set(Calendar.SECOND,0);
             }
             time_long = today.getTimeInMillis();
-            Log.i("정보 : ", today.toString());
         }
-        else //반복요일 아닌 경우
+        else
         {
             Calendar time_to_day= Calendar.getInstance();
             time_to_day.set(Calendar.YEAR,item.getYear());
@@ -428,9 +401,7 @@ public class Alram_Service extends Service {
             time_to_day.set(Calendar.SECOND,0);
 
             if((today.getTimeInMillis() - time_to_day.getTimeInMillis()) > 0 ){
-                //alram_list.remove(item);
-                //write_list(alram_list);
-                //return;
+
                 time_to_day.set(Calendar.DAY_OF_MONTH,time_to_day.get(Calendar.DAY_OF_MONTH)+1);
                 item.setYear(time_to_day.get(Calendar.YEAR));
                 item.setMonth(time_to_day.get(Calendar.MONTH));
@@ -440,8 +411,6 @@ public class Alram_Service extends Service {
                 item.setHour(time_to_day.get(Calendar.HOUR_OF_DAY));
             }
             time_long = time_to_day.getTimeInMillis();
-            Log.i("정보 : ", time_to_day.toString());
-
         }
 
         Intent intent = new Intent(Alram_Service.this,MyReceiver.class);
@@ -450,7 +419,6 @@ public class Alram_Service extends Service {
         PendingIntent sender = PendingIntent.getBroadcast(Alram_Service.this,item.getId(),intent,0);
         AlarmManager am = (AlarmManager)getSystemService(Context.ALARM_SERVICE);
         am.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP,time_long,sender);
-
     }
 
     public void releaseAlram(Alram_Infor item)
@@ -458,13 +426,12 @@ public class Alram_Service extends Service {
       Intent intent = new Intent(Alram_Service.this,MyReceiver.class);
       PendingIntent sender = PendingIntent.getBroadcast(Alram_Service.this,item.getId(),intent,0);
       AlarmManager am = (AlarmManager)getSystemService(Context.ALARM_SERVICE);
-        am.cancel(sender);
+      am.cancel(sender);
 
     }
     public boolean get_alram_state(){
         return complete_end;
     }
-
 
     public void write_list(List<Alram_Infor> list)
     {
@@ -474,25 +441,18 @@ public class Alram_Service extends Service {
             PrintWriter out = new PrintWriter(fos);
             for (int i = 0; i < list.size(); i++) {
                 out.println("");
-                //년
                 out.print(list.get(i).getYear());
                 out.print(",");
-                //월
                 out.print(list.get(i).getMonth());
                 out.print(",");
-                //요일
                 out.print(list.get(i).getOrderDay());
                 out.print(",");
-                //일
                 out.print(list.get(i).getDay());
                 out.print(",");
-                //시
                 out.print(list.get(i).getHour());
                 out.print(",");
-                //분
                 out.print(list.get(i).getMin());
                 out.print(",");
-                //
                 if (!list.get(i).getPattern(1))
                     out.print(0);
                 else
@@ -535,9 +495,7 @@ public class Alram_Service extends Service {
             fos.close();
         }
         catch (Exception e){
-
         }
-
     }
 
     public void add_item(Alram_Infor item)
@@ -547,25 +505,18 @@ public class Alram_Service extends Service {
           fos = openFileOutput("myFile.txt",MODE_APPEND);
           PrintWriter out= new PrintWriter(fos);
               out.println("");
-          //년
               out.print(item.getYear());
               out.print(",");
-              //월
               out.print(item.getMonth());
               out.print(",");
-              //요일
               out.print(item.getOrderDay());
               out.print(",");
-              //일
               out.print(item.getDay());
               out.print(",");
-              //시
               out.print(item.getHour());
               out.print(",");
-              //분
               out.print(item.getMin());
               out.print(",");
-              //
               if (!item.getPattern(1))
                   out.print(0);
               else
@@ -606,10 +557,7 @@ public class Alram_Service extends Service {
           out.close();
           fos.close();
       }
-      catch (Exception e)
-      {
-
-      }
+      catch (Exception e) {}
     }
 
     public void remove_alram(int id)
@@ -629,8 +577,4 @@ public class Alram_Service extends Service {
     List<Alram_Infor> getAlram_list(){//읽기  전용
       return alram_list;
     }
-
-
-
-
 }

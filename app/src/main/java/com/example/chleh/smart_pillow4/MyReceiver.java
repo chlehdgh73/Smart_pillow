@@ -11,8 +11,6 @@ public class MyReceiver extends BroadcastReceiver {
         String action = intent.getStringExtra("alram!");
         int id = intent.getIntExtra("this_is_id", -1);
 
-        Log.i("정보 : ", "action = " + action);
-
         if(action == null){
             return;
         }

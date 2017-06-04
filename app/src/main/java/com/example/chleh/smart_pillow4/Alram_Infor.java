@@ -1,27 +1,17 @@
 package com.example.chleh.smart_pillow4;
-
 import android.content.BroadcastReceiver;
 import android.content.Intent;
 import android.content.IntentFilter;
-
-/**
- * Created by chleh on 2017-04-02.
- */
-
 public class Alram_Infor {
-
     private int year;
     private int month;
     private int day;
-    private int hour;//0~23
-    private int min;//
+    private int hour;
+    private int min;
     private int id;
-    private int week_order_day;//월화수목금
-
+    private int week_order_day;
     private boolean pattern[] =new boolean [8];
     private boolean redo;
-
-
         Alram_Infor(int year, int month, int day, int week_first_day, int hour, int min, boolean pattern [], int id)
        {
            for(int i=1;i<8;i++)
@@ -46,21 +36,13 @@ public class Alram_Infor {
              }
          }
      }
-    boolean get_redo()
-    {
-        return redo;
-    }
-
+    boolean get_redo(){return redo;}
     void setId(int id){this.id=id;}
     void setYear(int year)
     {
         this.year=year;
     }
-    void setMonth(int month)
-    {
-        this.month=month;
-
-    }
+    void setMonth(int month){this.month=month;}
     void setDay(int day)
     {
         this.day=day;
@@ -81,7 +63,6 @@ public class Alram_Infor {
     {
         return this.id;
     }
-
     int getYear()
     {
         return this.year;
@@ -117,14 +98,8 @@ public class Alram_Infor {
         this.pattern[i]=true;
         this.setredo(this.pattern);
     }
-
-
     boolean  getPattern(int a)
     {
         return this.pattern[a];
     }
-
-
-
-
 }

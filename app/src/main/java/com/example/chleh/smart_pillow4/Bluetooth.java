@@ -30,19 +30,15 @@ public class Bluetooth extends AppCompatActivity {
     private BLEService bluetooth_service = null;
     private Context context = this;
 
-
     private final ServiceConnection mServiceConnection = new ServiceConnection() {
         @Override
         public void onServiceConnected(ComponentName componentName, IBinder service) {
             bluetooth_service = ((BLEService.LocalBinder) service).getService();
-            Log.i("정보 : ","service_connect 호출");
-            // Automatically connects to the device upon successful start-up initialization.
         }
 
         @Override
         public void onServiceDisconnected(ComponentName componentName) {
             bluetooth_service = null;
-            Log.i("정보 : ","service_disconnect 호출");
         }
     };
 
@@ -55,12 +51,10 @@ public class Bluetooth extends AppCompatActivity {
         button2 = (Button)findViewById(R.id.button2);
         button3 = (Button)findViewById(R.id.button3);
         listview = (ListView)findViewById(R.id.listView);
-
         device_adapter = new ArrayAdapter<>(this,android.R.layout.simple_list_item_1);
         listview.setAdapter(device_adapter);
 
         Intent service = new Intent(this, BLEService.class);
-
         bindService(service, mServiceConnection, 0);
 
         listview.setOnItemClickListener(new AdapterView.OnItemClickListener() {
@@ -68,7 +62,6 @@ public class Bluetooth extends AppCompatActivity {
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
                 if(bluetooth_service != null) {
                     bluetooth_service.select_device(device_adapter.getItem(position));
-
                     AlertDialog.Builder builder = new AlertDialog.Builder(context);
                     builder
                             .setTitle("알림.")
@@ -81,7 +74,6 @@ public class Bluetooth extends AppCompatActivity {
                             });
                     AlertDialog dialog = builder.create();
                     dialog.show();
-
                     re_scan_device();
                 }
             }
@@ -94,7 +86,6 @@ public class Bluetooth extends AppCompatActivity {
                     case R.id.button1:
                         if(!re_scan_device()){
                             AlertDialog.Builder builder = new AlertDialog.Builder(context);
-
                             builder
                                     .setTitle("검색에 실패했습니다.")
                                     .setMessage("잠시후에 다시시도해주세요.")
@@ -162,9 +153,6 @@ public class Bluetooth extends AppCompatActivity {
         button1.setOnClickListener(listener);
         button2.setOnClickListener(listener);
         button3.setOnClickListener(listener);
-
-
-
     }
     @Override
     public void onResume(){
@@ -194,7 +182,6 @@ public class Bluetooth extends AppCompatActivity {
         @Override
         public void onReceive(Context context, Intent intent) {
             String action = intent.getAction();
-
             if(action.equals(BLEService.BLE_NOTIFY)){
                 device_adapter.add(intent.getStringExtra(BLEService.DEVICE_ADDRESS));
                 device_adapter.notifyDataSetChanged();

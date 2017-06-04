@@ -31,10 +31,6 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Random;
 
-/**
- * Created by PH8 on 2017-06-01.
- */
-
 class music_item{
     String id;
     String name;
@@ -83,23 +79,17 @@ class music_sorting implements Comparator<music_item> {
 
 public class MusicService extends Service {
     public final static String RESERVE_STOP_MUSIC_ALRAM = "reserve_event_triger";
-
     List<music_item> music_list = new ArrayList<>();
     private final static String SAVED_LIST_FILE_NAME = "music_list.txt";
     private final static String SAVED_STAET_FILE_NAME = "music_state.txt";
-
     private boolean on_off_state = false;
     private boolean random_play = false;
     private int play_time = 60 * 1000;
     private int last_play = -1;
-
     private MediaPlayer mediaPlayer = new MediaPlayer();
-
     private boolean is_stop_reserved = false;
     private int stop_alram_id = 123456789;
-
     int pre_lain_state = BLEService.STATE_LAIN;
-
     private BLEService bluetooth_service = null;
     private Alram_Service alram_service = null;
 
@@ -107,16 +97,12 @@ public class MusicService extends Service {
         @Override
         public void onServiceConnected(ComponentName componentName, IBinder service) {
             bluetooth_service = ((BLEService.LocalBinder) service).getService();
-
             pre_lain_state = bluetooth_service.query_state();
-
-            // Automatically connects to the device upon successful start-up initialization.
         }
 
         @Override
         public void onServiceDisconnected(ComponentName componentName) {
             bluetooth_service = null;
-
         }
     };
 
@@ -124,19 +110,13 @@ public class MusicService extends Service {
         @Override
         public void onServiceConnected(ComponentName componentName, IBinder service) {
             alram_service = ((Alram_Service.LocalBinder) service).getService();
-            // Automatically connects to the device upon successful start-up initialization.
         }
-
         @Override
         public void onServiceDisconnected(ComponentName componentName) {
             alram_service = null;
-
         }
     };
-
-
     private final IBinder mBinder = new LocalBinder();
-
     public class LocalBinder extends Binder {
         MusicService getService() {
             return MusicService.this;
@@ -145,7 +125,6 @@ public class MusicService extends Service {
 
     @Override
     public void onCreate(){
-        //저장해 두었던 리스트 복원
         music_list.clear();
         FileInputStream file_in = null;
         BufferedReader buffer = null;
@@ -178,7 +157,7 @@ public class MusicService extends Service {
                 e.printStackTrace();
             }
         }
-        //기능 on인지 off인지 확인
+
         on_off_state = false;
         try {
             file_in = openFileInput(SAVED_STAET_FILE_NAME);
@@ -207,57 +186,42 @@ public class MusicService extends Service {
                 e.printStackTrace();
             }
         }
-
         mediaPlayer.setOnCompletionListener(new MediaPlayer.OnCompletionListener(){
             @Override
             public void onCompletion(MediaPlayer mp) {
                 start_music();
             }
         });
-
-        //블루투스 서비스 바인딩
-
         Intent service = new Intent(this, BLEService.class);
         bindService(service, mServiceConnection, 0);
-
-        //알람서비스 바인딩
-
         service = new Intent(this, Alram_Service.class);
         bindService(service, mServiceConnection2, 0);
-
-        //브로드캐스트 리시버 등록
         IntentFilter filter = new IntentFilter(BLEService.STATE_CHANGE_NOTIFY);
         IntentFilter filter2 = new IntentFilter(RESERVE_STOP_MUSIC_ALRAM);
         registerReceiver(mReceiver, filter);
         registerReceiver(mReceiver, filter2);
-
     }
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startid){
-
         return super.onStartCommand(intent, flags, startid);
     }
 
     public IBinder onBind(Intent intent){
         return mBinder;
     }
-
     @Override
     public void onRebind(Intent intent){
-
     }
 
     @Override
     public boolean onUnbind(Intent intent){
-
         return true;
     }
 
     @Override
     public void onDestroy(){
         super.onDestroy();
-        //브로드캐스트 리시버 해제
         unregisterReceiver(mReceiver);
         mediaPlayer.release();
         mediaPlayer = null;
@@ -269,7 +233,6 @@ public class MusicService extends Service {
             if(on_off_state == false){
                 return;
             }
-
             if(bluetooth_service == null) {
                 return;
             }
@@ -279,12 +242,8 @@ public class MusicService extends Service {
 
             if(action.equals(BLEService.STATE_CHANGE_NOTIFY)){
                 next_state = intent.getIntExtra(BLEService.NOTIFY_STATE, 1);
-                //음악 자동재생은 초기상태에서 누운 상태로 변할때만 재생하는것이다.
-                //누워있다가 다시 일어나면 음악을 재생할 필요가 없으므로 다시 꺼야한다.
-
                 if(pre_lain_state == BLEService.STATE_INIT && next_state == BLEService.STATE_LAIN){
-                    //음악을 재생시키고
-                    //일정시간뒤에 음악이 자동으로 종료되도록 타이머를 걸어야함.
+
                     if(alram_service == null){
                         return;
                     }
@@ -295,13 +254,10 @@ public class MusicService extends Service {
                     reserve_stop_music();
                 }
                 else {
-
-                    //음악이 재생중이였다면 음악을 강제로 종료시켜야함
                     if(bluetooth_service.query_lain_state() == false) {
                         stop_music();
                     }
                 }
-
                 pre_lain_state = next_state;
             }
             else if(action.equals(MusicService.RESERVE_STOP_MUSIC_ALRAM)){
@@ -318,14 +274,12 @@ public class MusicService extends Service {
         if(music_list.size() == 0){
             return;
         }
-
         if(random_play == true){
             last_play = random.nextInt(music_list.size());
         }
         else{
             last_play = (last_play + 1) % music_list.size();
         }
-
         try {
             music_id = music_list.get(last_play).id;
             musicURI = Uri.withAppendedPath(MediaStore.Audio.Media.EXTERNAL_CONTENT_URI, "" + music_id);
@@ -353,9 +307,7 @@ public class MusicService extends Service {
     private void reserve_stop_music(){
         Intent alram = new Intent(this, music_stop_receiver.class);
         PendingIntent sender = PendingIntent.getBroadcast(this, stop_alram_id, alram, 0);
-
         long timer = System.currentTimeMillis() + play_time;
-
         AlarmManager am = (AlarmManager)getSystemService(Context.ALARM_SERVICE);
         am.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP,timer,sender);
     }
@@ -401,7 +353,6 @@ public class MusicService extends Service {
             }
             while(musicCursor.moveToNext());
         }
-
         return all_music_list;
     }
 
@@ -479,11 +430,9 @@ public class MusicService extends Service {
         FileOutputStream file_out = null;
         PrintWriter writer = null;
 
-        //여기서 파일을 읽어서 저장된 설정(선택된 베개의 블루투스 주소)를 읽어온다.
         try {
             file_out = openFileOutput(SAVED_STAET_FILE_NAME,Context.MODE_PRIVATE);
             writer = new PrintWriter(file_out);
-
             if(on_off_state == true){
                 writer.println(1);
             }
@@ -497,12 +446,9 @@ public class MusicService extends Service {
                 writer.println(0);
             }
             writer.println(play_time);
-
         } catch (FileNotFoundException e) {
-            //파일이 없고 생성도 실패
         }
         catch (IOException e1){
-            //왜 발생할지 감도 안잡힙니다.
         }
         finally{
             try {
@@ -518,7 +464,6 @@ public class MusicService extends Service {
         FileOutputStream file_out = null;
         PrintWriter writer = null;
 
-        //여기서 파일을 읽어서 저장된 설정(선택된 베개의 블루투스 주소)를 읽어온다.
         try {
             file_out = openFileOutput(SAVED_LIST_FILE_NAME,Context.MODE_PRIVATE);
             writer = new PrintWriter(file_out);
@@ -530,10 +475,8 @@ public class MusicService extends Service {
             }
 
         } catch (FileNotFoundException e) {
-            //파일이 없고 생성도 실패
         }
         catch (IOException e1){
-            //왜 발생할지 감도 안잡힙니다.
         }
         finally{
             try {

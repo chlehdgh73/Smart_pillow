@@ -34,10 +34,6 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Locale;
 
-/**
- * Created by PH8 on 2017-05-28.
- */
-
 class Phone_number{
     String name;
     String number;
@@ -77,15 +73,12 @@ class sorting implements Comparator<Phone_number>{
         return target1.name.compareTo(target2.name);
     }
 }
-
 public class CCService extends Service {
     private final static String SAVED_LIST_FILE_NAME = "cc_allow_list.txt";
     private final static String SAVED_SATE_FILE_NAME = "cc_sate.txt";
-
     private List<Phone_number> allow_list = new ArrayList<Phone_number>();
-    private boolean on_off_state;//true = on, false = off
+    private boolean on_off_state;
     private String call_state = "unknown";
-
     private final IBinder mBinder = new LocalBinder();
 
     public class LocalBinder extends Binder {
@@ -93,28 +86,22 @@ public class CCService extends Service {
             return CCService.this;
         }
     }
-
     private BLEService bluetooth_service = null;
 
     private final ServiceConnection mServiceConnection = new ServiceConnection() {
         @Override
         public void onServiceConnected(ComponentName componentName, IBinder service) {
             bluetooth_service = ((BLEService.LocalBinder) service).getService();
-
-            // Automatically connects to the device upon successful start-up initialization.
         }
 
         @Override
         public void onServiceDisconnected(ComponentName componentName) {
             bluetooth_service = null;
-
         }
     };
 
     @Override
     public void onCreate(){
-        //파일 읽어서
-        //허용할 전화번호 리스트 불러오고
         allow_list.clear();
         FileInputStream file_in = null;
         BufferedReader buffer = null;
@@ -146,7 +133,7 @@ public class CCService extends Service {
                 e.printStackTrace();
             }
         }
-        //기능 on인지 off인지 확인
+
         on_off_state = false;
         try {
             file_in = openFileInput(SAVED_SATE_FILE_NAME);
@@ -169,19 +156,14 @@ public class CCService extends Service {
             }
         }
 
-
-        //BLE서비스 바인딩
         Intent service = new Intent(this, BLEService.class);
         bindService(service, mServiceConnection, 0);
-
-        //브로드캐스트 리시버 등록
         IntentFilter filter = new IntentFilter(TelephonyManager.ACTION_PHONE_STATE_CHANGED);
         registerReceiver(mReceiver, filter);
     }
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startid) {
-
         return super.onStartCommand(intent,flags,startid);
     }
 
@@ -192,19 +174,16 @@ public class CCService extends Service {
 
     @Override
     public void onRebind(Intent intent){
-
     }
 
     @Override
     public boolean onUnbind(Intent intent){
-
         return true;
     }
 
     @Override
     public void onDestroy(){
         super.onDestroy();
-        //브로드캐스트리시버 등록해제
         unregisterReceiver(mReceiver);
     }
 
@@ -214,11 +193,9 @@ public class CCService extends Service {
             if(on_off_state == false){
                 return;
             }
-
             if(bluetooth_service == null){
                 return;
             }
-
             int lain_state = bluetooth_service.query_state();
             switch(lain_state){
                 case BLEService.STATE_INIT:
@@ -227,21 +204,15 @@ public class CCService extends Service {
                 case BLEService.STATE_COMPLETE_AWAKE:
                     return;
             }
-
-
-
             String state = intent.getStringExtra(TelephonyManager.EXTRA_STATE);
-
             if(state.equals(call_state)){
                 return;
             }
             else{
                 call_state = state;
             }
-            Log.i("정보 : ", state);
             if(TelephonyManager.EXTRA_STATE_RINGING.equals(state)){
                 String number = PhoneNumberUtils.formatNumber(intent.getStringExtra(TelephonyManager.EXTRA_INCOMING_NUMBER), Locale.getDefault().getCountry());
-                Log.i("정보 : ", number);
                 boolean isEqual = false;
                 for(Phone_number list : allow_list) {
                     if (list.number.equals(number)) {
@@ -260,15 +231,11 @@ public class CCService extends Service {
                         telephony = (ITelephony) method.invoke(tel_manager);
                         telephony.endCall();
                     } catch (Exception e) {
-                        //전화제어 불가능
-                        Log.i("정보 : ", "전화제어실패");
-
                     }
                 }
             }
         }
     };
-
 
     public void turn_on(){
         on_off_state = true;
@@ -292,7 +259,6 @@ public class CCService extends Service {
         String[] selection = new String[]{ContactsContract.CommonDataKinds.Phone.DISPLAY_NAME, ContactsContract.CommonDataKinds.Phone.NUMBER};
         String[] selectionArgs = null;
         String sortOrder = ContactsContract.CommonDataKinds.Phone.DISPLAY_NAME + " COLLATE LOCALIZED ASC";
-
         Cursor contactCursor = this.getContentResolver().query(query_uri, selection, null, selectionArgs, sortOrder);
 
         if(contactCursor.moveToFirst()){
@@ -304,7 +270,6 @@ public class CCService extends Service {
             }
             while(contactCursor.moveToNext());
         }
-
         return phone_list;
     }
 
@@ -361,24 +326,18 @@ public class CCService extends Service {
     private void on_off_state_file_write(){
         FileOutputStream file_out = null;
         PrintWriter writer = null;
-
-        //여기서 파일을 읽어서 저장된 설정(선택된 베개의 블루투스 주소)를 읽어온다.
         try {
             file_out = openFileOutput(SAVED_SATE_FILE_NAME,Context.MODE_PRIVATE);
             writer = new PrintWriter(file_out);
-
             if(on_off_state == true){
                 writer.println(1);
             }
             else{
                 writer.println(0);
             }
-
         } catch (FileNotFoundException e) {
-            //파일이 없고 생성도 실패
         }
         catch (IOException e1){
-            //왜 발생할지 감도 안잡힙니다.
         }
         finally{
             try {
@@ -393,22 +352,16 @@ public class CCService extends Service {
     private void allow_list_file_write(){
         FileOutputStream file_out = null;
         PrintWriter writer = null;
-
-        //여기서 파일을 읽어서 저장된 설정(선택된 베개의 블루투스 주소)를 읽어온다.
         try {
             file_out = openFileOutput(SAVED_LIST_FILE_NAME,Context.MODE_PRIVATE);
             writer = new PrintWriter(file_out);
-
             for(Phone_number list : allow_list){
                 writer.println(list.name);
                 writer.println(list.number);
             }
-
         } catch (FileNotFoundException e) {
-            //파일이 없고 생성도 실패
         }
         catch (IOException e1){
-            //왜 발생할지 감도 안잡힙니다.
         }
         finally{
             try {

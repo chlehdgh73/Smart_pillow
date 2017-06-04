@@ -38,25 +38,19 @@ public class music_play extends AppCompatActivity {
             music_service = ((MusicService.LocalBinder) service).getService();
             list_adapter.modifyItem(music_service.get_allow_list());
             list_adapter.notifyDataSetChanged();
-            // Automatically connects to the device upon successful start-up initialization.
         }
         @Override
         public void onServiceDisconnected(ComponentName componentName) {
             music_service = null;
         }
     };
-
-
-
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_music_play2);
-
         button1 = (Button)findViewById(R.id.music_button1);
         button2 = (Button)findViewById(R.id.music_button2);
         listview = (ListView)findViewById(R.id.music_listView);
-
         list_adapter = new ListViewAdapter();
         listview.setAdapter(list_adapter);
 
@@ -69,16 +63,12 @@ public class music_play extends AppCompatActivity {
                 if(music_service == null){
                     return;
                 }
-
                 final List<music_item> all_list = music_service.get_all_list();
-
                 CharSequence[] items = new String[all_list.size()];
                 for(int i = 0 ; i < all_list.size() ; i++){
                     items[i] = all_list.get(i).name + " - " + all_list.get(i).artist;
                 }
-
                 final List<music_item> selected_items = new ArrayList<>();
-                music_item temp;
                 AlertDialog.Builder builder = new AlertDialog.Builder(context);
                 builder
                         .setTitle("음악 리스트")
@@ -122,16 +112,12 @@ public class music_play extends AppCompatActivity {
                 LayoutInflater dialog = LayoutInflater.from(context);
                 final View dialogLayout = dialog.inflate(R.layout.music_setting_activity, null);
                 final Dialog myDialog = new Dialog(context);
-
                 myDialog.setTitle("설정");
                 myDialog.setContentView(dialogLayout);
                 myDialog.setCancelable(true);
-
                 boolean pre_on_off_state = false;
                 boolean pre_random_play_state = false;
                 int pre_play_time = 0;
-
-
                 if(music_service != null){
                     pre_on_off_state = music_service.get_on_off_state();
                     pre_random_play_state = music_service.get_random_play_state();
@@ -144,9 +130,7 @@ public class music_play extends AppCompatActivity {
                 Switch on_off_switch = (Switch)dialogLayout.findViewById(R.id.music_switch2);
                 Button button_ok = (Button)dialogLayout.findViewById(R.id.music_button3);
                 Button button_cancel = (Button)dialogLayout.findViewById(R.id.music_button4);
-
                 editText.setText(""+pre_play_time);
-
                 random_switch.setChecked(pre_random_play_state);
                 on_off_switch.setChecked(pre_on_off_state);
 
@@ -194,13 +178,10 @@ public class music_play extends AppCompatActivity {
                 button_cancel.setOnClickListener(new View.OnClickListener() {
                     @Override
                     public void onClick(View v) {
-
                         myDialog.cancel();
                     }
                 });
-
                 myDialog.show();
-
             }
         });
 
@@ -208,8 +189,6 @@ public class music_play extends AppCompatActivity {
             @Override
             public boolean onItemLongClick(AdapterView<?> parent, View view, int position, long id) {
                 final music_item item = (music_item) parent.getItemAtPosition(position);
-                //삭제할껀지 물어보는 다이얼로그박스출력
-                //yes이면 삭제요청
                 if(music_service == null){
                     return true;
                 }
@@ -234,36 +213,28 @@ public class music_play extends AppCompatActivity {
                         });
                 AlertDialog dialog = builder.create();
                 dialog.show();
-
                 return true;
             }
         });
-
-
     }
 
     private class ListViewAdapter extends BaseAdapter {
         private List<music_item> list_item = new ArrayList<>();
-
         @Override
         public int getCount() {
             return list_item.size();
         }
-
         @Override
         public Object getItem(int i) {
             return list_item.get(i);
         }
-
         @Override
         public long getItemId(int i) {
             return i;
         }
-
         @Override
         public View getView(int i, View view, ViewGroup viewGroup) {
             Context context = viewGroup.getContext();
-
             if (view == null) {
                 LayoutInflater inflater = (LayoutInflater)context.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
                 view = inflater.inflate(R.layout.music_list_view_item, viewGroup, false);
@@ -273,7 +244,6 @@ public class music_play extends AppCompatActivity {
             TextView text_artist = (TextView)view.findViewById(R.id.music_textView2);
 
             music_item item = list_item.get(i);
-
             text_name.setText(item.name);
             text_artist.setText(item.artist);
 

@@ -1,5 +1,4 @@
 package com.example.chleh.smart_pillow4;
-
 import android.app.AlarmManager;
 import android.app.PendingIntent;
 import android.content.BroadcastReceiver;
@@ -45,7 +44,6 @@ import java.util.Random;
 import java.util.StringTokenizer;
 
 import static android.os.Build.VERSION.SDK_INT;
-
 public class Alram extends AppCompatActivity {
 
     private ArrayList<String> alram_item;
@@ -74,7 +72,6 @@ public class Alram extends AppCompatActivity {
                 alram_item.add(changeItem(temp.get(i)));
             }
             adapter.notifyDataSetChanged();
-            // Automatically connects to the device upon successful start-up initialization.
         }
 
         @Override
@@ -87,7 +84,6 @@ public class Alram extends AppCompatActivity {
         @Override
         public void onReceive(Context context, Intent intent) {
             String action = intent.getAction();
-
             if(action.equals(Alram_Service.ALRAM_DONE)){
                 List<Alram_Infor> temp = alram_service.getAlram_list();
                 alram_item.clear();
@@ -154,7 +150,6 @@ public class Alram extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_alram);
 
-
          pattern=new boolean[8];
          A_time=(TimePicker)findViewById(R.id.timePicker);
          alram_item =new ArrayList<String>();
@@ -170,19 +165,13 @@ public class Alram extends AppCompatActivity {
 
         Intent service = new Intent(this, Alram_Service.class);
         bindService(service, mServiceConnection, 0);
-        /*
-        반복되는 요일정보 setting
-        디폴트 false;
-         */
         SetDay(pattern);
         alram_list.setAdapter(adapter);
         adapter.notifyDataSetChanged();
-        //시간 계산
-        mon.setOnClickListener(new View.OnClickListener() {
+                mon.setOnClickListener(new View.OnClickListener() {
 
             @Override
             public void onClick(View v) {
-                //시험용
                 if(mon.isChecked())
                 {
                     pattern[2]=true;
@@ -198,7 +187,6 @@ public class Alram extends AppCompatActivity {
 
             @Override
             public void onClick(View v) {
-                //시험용
                 if(tue.isChecked())
                 {
                     pattern[3]=true;
@@ -214,7 +202,6 @@ public class Alram extends AppCompatActivity {
 
             @Override
             public void onClick(View v) {
-                //시험용
                 if(wen.isChecked())
                 {
                     pattern[4]=true;
@@ -223,14 +210,12 @@ public class Alram extends AppCompatActivity {
                 {
                     pattern[4]=false;
                 }
-
             }
         });
         thu.setOnClickListener(new View.OnClickListener() {
 
             @Override
             public void onClick(View v) {
-                //시험용
                 if(thu.isChecked())
                 {
                     pattern[5]=true;
@@ -239,14 +224,12 @@ public class Alram extends AppCompatActivity {
                 {
                     pattern[5]=false;
                 }
-
             }
         });
         fri.setOnClickListener(new View.OnClickListener() {
 
             @Override
             public void onClick(View v) {
-                //시험용
                 if(fri.isChecked())
                 {
                     pattern[6]=true;
@@ -255,14 +238,12 @@ public class Alram extends AppCompatActivity {
                 {
                     pattern[6]=false;
                 }
-
             }
         });
         sat.setOnClickListener(new View.OnClickListener() {
 
             @Override
             public void onClick(View v) {
-                //시험용
                 if(sat.isChecked())
                 {
                     pattern[7]=true;
@@ -271,14 +252,12 @@ public class Alram extends AppCompatActivity {
                 {
                     pattern[7]=false;
                 }
-
             }
         });
         sun.setOnClickListener(new View.OnClickListener() {
 
             @Override
             public void onClick(View v) {
-                //시험용
                 if(sun.isChecked())
                 {
                     pattern[1]=true;
@@ -287,17 +266,14 @@ public class Alram extends AppCompatActivity {
                 {
                     pattern[1]=false;
                 }
-
             }
         });
 
-        //삽입 버튼 만들기
         Button button1 = (Button)findViewById(R.id.Btn_insert);
         button1.setOnClickListener(new View.OnClickListener() {
 
             @Override
             public void onClick(View v) {
-                //시험용
                 if(alram_service == null){
                     Toast.makeText(getApplicationContext(),"알람서비스가 없습니다.",Toast.LENGTH_SHORT).show();
                     return;
@@ -321,17 +297,14 @@ public class Alram extends AppCompatActivity {
                     }
                 }
                 alram_service.add_alram(new Alram_Infor(temp_year,temp_month,temp_day,temp_week,A_time.getHour(),A_time.getMinute(),pattern,random.nextInt(10^5)));
-
                 int i;
                 List<Alram_Infor> temp = alram_service.getAlram_list();
                 alram_item.clear();
-                for(i = 0 ; i < temp.size() ; i++){
+                for( i = 0 ; i < temp.size() ; i++){
                     String s = changeItem(temp.get(i));
-                    Log.i("정보 : ", s);
                     alram_item.add(s);
                 }
                 adapter.notifyDataSetChanged();
-
                 SetDay(pattern);
                 mon.setChecked(false);
                 thu.setChecked(false);
@@ -344,10 +317,6 @@ public class Alram extends AppCompatActivity {
             }
         });
 
-
-
-
-        //삭제
         Button button2 = (Button)findViewById(R.id.Btn_delete);
         button2.setOnClickListener(new View.OnClickListener() {
 
@@ -365,10 +334,8 @@ public class Alram extends AppCompatActivity {
                 int i;
                 temp = alram_service.getAlram_list();
                 alram_item.clear();
-
                 for(i = 0 ; i < temp.size() ; i++){
                     String s = changeItem(temp.get(i));
-                    Log.i("정보 : ", s);
                     alram_item.add(s);
                 }
                 adapter.notifyDataSetChanged();
@@ -379,7 +346,6 @@ public class Alram extends AppCompatActivity {
     @Override
     public void onResume(){
         super.onResume();
-
         IntentFilter filter = new IntentFilter(Alram_Service.ALRAM_DONE);
         registerReceiver(mBroadcastRecevier, filter);
         if(alram_service != null) {
